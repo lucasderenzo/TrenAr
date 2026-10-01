@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Train body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M42,28h24c7.2,0 13,5.8 13,13v27c0,4.4 -3.6,8 -8,8h-34c-4.4,0 -8,-3.6 -8,-8v-27c0,-7.2 5.8,-13 13,-13z" />
+    <!-- Windshield -->
+    <path
+        android:fillColor="#FF37C2FF"
+        android:pathData="M40,40h28v14h-28z"
+        android:fillAlpha="1" />
+    <!-- Window split -->
+    <path
+        android:fillColor="#FF14345C"
+        android:pathData="M52.4,40h3.2v14h-3.2z" />
+    <!-- Headlights -->
+    <path
+        android:fillColor="#FFFFC53D"
+        android:pathData="M41,60m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#FFFFC53D"
+        android:pathData="M67,60m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <!-- Skirt -->
+    <path
+        android:fillColor="#FF0A1B30"
+        android:pathData="M35,68h38v4h-38z" />
+    <!-- Rails -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M40,80l-6,10h5l6,-10z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M68,80l6,10h-5l-6,-10z" />
+</vector>

@@ -1,0 +1,22 @@
+# Gradle / Android build
+.gradle/
+build/
+/app/build/
+/build/
+local.properties
+captures/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Keystores / secrets
+*.jks
+*.keystore
+keystore.properties
+
+# APK / bundle outputs (adjuntá el APK a un GitHub Release en vez de versionarlo)
+*.apk
+*.aab
