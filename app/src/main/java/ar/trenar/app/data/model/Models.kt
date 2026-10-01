@@ -9,7 +9,23 @@ data class StationRef(
     val lat: Double,
     val lng: Double,
     val ramales: List<Int> = emptyList(),
+    val line: String = "",
     val distanceMeters: Double? = null,
+)
+
+/** A station paired with its next upcoming train (if any). Used in the Cercanas/Favoritos lists. */
+data class StationWithNext(
+    val station: StationRef,
+    val next: Arrival? = null,
+    val loading: Boolean = false,
+)
+
+/** A service alert from a line (gerencia). */
+data class ServiceAlert(
+    val line: String,
+    val title: String,
+    val body: String,
+    val ramalId: Int? = null,
 )
 
 enum class DelayStatus { ON_TIME, MINOR, MAJOR, CANCELLED, UNKNOWN }

@@ -19,6 +19,7 @@ private data class CatalogEntry(
     val lat: Double,
     val lng: Double,
     val ramales: List<Int> = emptyList(),
+    val line: String = "",
 )
 
 /** Bundled offline catalog of stations (name + coordinates), loaded once from assets. */
@@ -41,7 +42,7 @@ class StationCatalog(private val context: Context) {
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
             .removePrefix("﻿") // tolerate a UTF-8 BOM
         val entries = json.decodeFromString(ListSerializer(CatalogEntry.serializer()), text)
-        entries.map { StationRef(it.id, it.nombre, it.lat, it.lng, it.ramales) }
+        entries.map { StationRef(it.id, it.nombre, it.lat, it.lng, it.ramales, it.line) }
     }
 
     suspend fun nearest(lat: Double, lng: Double, limit: Int = 8): List<StationRef> =

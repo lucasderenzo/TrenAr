@@ -3,11 +3,16 @@ package ar.trenar.app.data
 import ar.trenar.app.data.local.StationCatalog
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
+import ar.trenar.app.data.model.ServiceAlert
 import ar.trenar.app.data.model.StationRef
+import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.data.remote.SofseApi
 import ar.trenar.app.data.remote.dto.ArrivalResult
 import ar.trenar.app.data.remote.dto.StationDto
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonNull
 import java.time.Instant
@@ -29,6 +34,70 @@ class TrenRepository(
         catalog.nearest(lat, lng, limit)
 
     suspend fun station(id: Int): StationRef? = catalog.byId(id)
+
+    /** Soonest upcoming train at a station, or null if none / no service. */
+    suspend fun nextArrival(stationId: Int): Arrival? = withContext(Dispatchers.IO) {
+        val resp = runCatching { api.arrivals(stationId, cantidad = 4) }.getOrNull() ?: return@withContext null
+        val serverTs = if (resp.timestamp > 0) resp.timestamp else System.currentTimeMillis() / 1000
+        resp.results.mapNotNull { it.toArrival(serverTs) }
+            .filter { !it.cancelled }
+            .minByOrNull { it.etaSeconds ?: Int.MAX_VALUE }
+    }
+
+    /** All catalog stations belonging to a line. */
+    suspend fun stationsOfLine(line: String): List<StationRef> =
+        catalog.all().filter { it.line.equals(line, ignoreCase = true) }
+
+    /** The list of SOFSE lines that actually have stations, in display order. */
+    suspend fun availableLines(): List<String> {
+        val present = catalog.all().map { it.line }.filter { it.isNotBlank() }.toSet()
+        val order = listOf("Sarmiento", "Mitre", "Roca", "San Martín", "Belgrano Sur", "Tren de la Costa", "Regionales")
+        return order.filter { it in present } + present.filter { it !in order }
+    }
+
+    /**
+     * Live trains currently reported on a line, de-duplicated. Samples several stations of the
+     * line and collects the services that carry a GPS position.
+     */
+    suspend fun liveTrains(line: String, sampleStations: Int = 12): List<Arrival> = coroutineScope {
+        val stations = stationsOfLine(line)
+        if (stations.isEmpty()) return@coroutineScope emptyList()
+        val step = (stations.size / sampleStations).coerceAtLeast(1)
+        val sample = stations.filterIndexed { i, _ -> i % step == 0 }.take(sampleStations)
+        val responses = sample.map { st ->
+            async { runCatching { api.arrivals(st.id, cantidad = 12) }.getOrNull() }
+        }.awaitAll()
+        responses.filterNotNull()
+            .flatMap { resp ->
+                val ts = if (resp.timestamp > 0) resp.timestamp else System.currentTimeMillis() / 1000
+                resp.results.mapNotNull { it.toArrival(ts) }
+            }
+            .filter { it.trainLat != null && it.trainLng != null && !(it.trainLat == 0.0 && it.trainLng == 0.0) }
+            .distinctBy { it.serviceId }
+    }
+
+    /** Enrich a list of stations with each one's next train, fetched in parallel. */
+    suspend fun withNextArrivals(stations: List<StationRef>): List<StationWithNext> = coroutineScope {
+        stations.map { st -> async { StationWithNext(st, nextArrival(st.id)) } }.awaitAll()
+    }
+
+    /** Current service alerts across all lines. */
+    suspend fun alerts(): List<ServiceAlert> = withContext(Dispatchers.IO) {
+        val gerencias = runCatching { api.gerencias(1) }.getOrNull() ?: return@withContext emptyList()
+        gerencias.flatMap { g ->
+            val line = g.nombre ?: ""
+            g.alerta.mapNotNull { a ->
+                val body = a.contenido?.trim().orEmpty()
+                if (body.isBlank()) null
+                else ServiceAlert(
+                    line = line,
+                    title = a.titulo?.trim()?.takeIf { it.isNotBlank() } ?: (g.estado?.mensaje?.trim()?.takeIf { it.isNotBlank() } ?: line),
+                    body = body,
+                    ramalId = a.ramalId,
+                )
+            }
+        }
+    }
 
     suspend fun board(stationId: Int, cantidad: Int = 20): BoardState = withContext(Dispatchers.IO) {
         val station = catalog.byId(stationId)

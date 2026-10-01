@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 // Brand — rail blue
 val RailBlue = Color(0xFF1E5AA8)
+val ArgentinaBlue = Color(0xFF4A90D9) // celeste argentino para el "Ar"
 val RailBlueDark = Color(0xFF0E2A47)
 val RailCyan = Color(0xFF37C2FF)
 val Amber = Color(0xFFFFB300)

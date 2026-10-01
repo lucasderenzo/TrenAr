@@ -85,3 +85,27 @@ data class TrainLocation(
     val lat: Double? = null,
     val long: Double? = null,
 )
+
+@Serializable
+data class GerenciaDto(
+    val id: Int? = null,
+    val nombre: String? = null,
+    val estado: EstadoDto? = null,
+    val alerta: List<AlertaDto> = emptyList(),
+)
+
+@Serializable
+data class EstadoDto(
+    val id: Int? = null,
+    val mensaje: String? = null,
+    val color: String? = null,
+)
+
+@Serializable
+data class AlertaDto(
+    val id: Long? = null,
+    @SerialName("linea_id") val lineaId: Int? = null,
+    @SerialName("ramal_id") val ramalId: Int? = null,
+    val titulo: String? = null,
+    val contenido: String? = null,
+)

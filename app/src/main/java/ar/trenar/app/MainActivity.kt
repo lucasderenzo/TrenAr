@@ -7,14 +7,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.navigation.compose.rememberNavController
-import ar.trenar.app.notifications.NotificationHelper
-import ar.trenar.app.ui.nav.TrenNavHost
+import ar.trenar.app.ui.nav.TrenRoot
 import ar.trenar.app.ui.theme.TrenTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,32 +23,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TrenTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.background,
-                ) {
-                    val navController = rememberNavController()
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val launcher = rememberLauncherForActivityResult(
-                            ActivityResultContracts.RequestPermission(),
-                        ) { /* result ignored; app works without it */ }
-                        LaunchedEffect(Unit) {
-                            val granted = ContextCompat.checkSelfPermission(
-                                this@MainActivity,
-                                android.Manifest.permission.POST_NOTIFICATIONS,
-                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                            if (!granted) {
-                                launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                            }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val launcher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestPermission(),
+                    ) { /* result ignored; app works without it */ }
+                    LaunchedEffect(Unit) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            android.Manifest.permission.POST_NOTIFICATIONS,
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        if (!granted) {
+                            launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                         }
                     }
-
-                    TrenNavHost(
-                        navController = navController,
-                        startStationId = startStationId,
-                    )
                 }
+
+                TrenRoot(startStationId = startStationId)
             }
         }
     }
