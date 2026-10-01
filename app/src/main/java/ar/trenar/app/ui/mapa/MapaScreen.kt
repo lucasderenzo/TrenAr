@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -83,33 +84,27 @@ fun MapaScreen(
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            Column(Modifier.background(MaterialTheme.colorScheme.background)) {
-                TabHeader("Red en vivo")
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.lines) { line ->
-                        FilterChip(
-                            selected = state.selectedLine == line,
-                            onClick = { viewModel.selectLine(line) },
-                            label = { Text(line) },
-                            leadingIcon = {
-                                LineBadge(line = line, size = 24.dp, corner = 7.dp)
-                            },
-                        )
-                    }
-                }
+    Column(Modifier.fillMaxSize()) {
+        TabHeader("Red en vivo")
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(state.lines) { line ->
+                FilterChip(
+                    selected = state.selectedLine == line,
+                    onClick = { viewModel.selectLine(line) },
+                    label = { Text(line) },
+                    leadingIcon = {
+                        LineBadge(line = line, size = 24.dp, corner = 7.dp)
+                    },
+                )
             }
-        },
-    ) { inner ->
+        }
         Box(
             Modifier
-                .padding(inner)
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .clipToBounds(),
         ) {
             AndroidView(
@@ -118,8 +113,10 @@ fun MapaScreen(
                 update = { mv ->
                     mv.overlays.clear()
                     val argb = LineColors.colorFor(state.selectedLine).toArgb()
-                    val stationIcon = trainMarker(ctx, density, argb, 20f)
-                    val trainIcon = trainMarker(ctx, density, argb, 30f)
+                    // Station: small, line-colored, thin white ring.
+                    val stationIcon = buildMarker(ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f)
+                    // Live train: bigger, with a bright green "en vivo" ring so it clearly stands out.
+                    val trainIcon = buildMarker(ctx, density, argb, 34f, OnTimeGreen.toArgb(), 3.5f)
 
                     state.stations.forEach { st ->
                         val marker = Marker(mv).apply {
@@ -198,25 +195,32 @@ fun MapaScreen(
     }
 }
 
-/** A circular, line-colored marker with a white train glyph. */
-private fun trainMarker(ctx: Context, density: Float, color: Int, sizeDp: Float): Drawable {
+/** A circular marker: [fill] core + a [ringColor] ring + a white train glyph. */
+private fun buildMarker(
+    ctx: Context,
+    density: Float,
+    fill: Int,
+    sizeDp: Float,
+    ringColor: Int,
+    ringWidthDp: Float,
+): Drawable {
     val size = (sizeDp * density).toInt().coerceAtLeast(8)
+    val ringW = ringWidthDp * density
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
-    val stroke = 2f * density
     val r = size / 2f
-    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
-    canvas.drawCircle(r, r, r - stroke, fill)
-    val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = AndroidColor.WHITE
+    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = fill }
+    canvas.drawCircle(r, r, r - ringW, fillPaint)
+    val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = ringColor
         style = Paint.Style.STROKE
-        strokeWidth = stroke
+        strokeWidth = ringW
     }
-    canvas.drawCircle(r, r, r - stroke, ring)
+    canvas.drawCircle(r, r, r - ringW / 2f - 0.5f, ringPaint)
     val train = ContextCompat.getDrawable(ctx, R.drawable.ic_stat_train)?.mutate()
     if (train != null) {
         train.setTint(AndroidColor.WHITE)
-        val inset = (size * 0.24f).toInt()
+        val inset = (ringW + size * 0.2f).toInt()
         train.setBounds(inset, inset, size - inset, size - inset)
         train.draw(canvas)
     }

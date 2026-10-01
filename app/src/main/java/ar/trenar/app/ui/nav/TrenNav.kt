@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ar.trenar.app.ui.alertas.AlertasScreen
 import ar.trenar.app.ui.board.BoardScreen
+import ar.trenar.app.ui.common.BrandBar
 import ar.trenar.app.ui.cercanas.CercanasScreen
 import ar.trenar.app.ui.favoritos.FavoritosScreen
 import ar.trenar.app.ui.mapa.MapaScreen
@@ -66,6 +67,9 @@ fun TrenRoot(startStationId: Int?) {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            if (showBar) BrandBar()
+        },
         bottomBar = {
             if (showBar) {
                 NavigationBar {
@@ -110,7 +114,7 @@ fun TrenRoot(startStationId: Int?) {
                 AlertasScreen()
             }
             composable(Dest.AJUSTES) {
-                SettingsScreen(onBack = null)
+                SettingsScreen()
             }
             composable(Dest.SEARCH) {
                 SearchScreen(

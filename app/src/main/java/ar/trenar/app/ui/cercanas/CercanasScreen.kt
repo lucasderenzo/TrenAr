@@ -115,8 +115,7 @@ private fun CercanasHeader(onOpenSearch: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 2.dp),
+            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
