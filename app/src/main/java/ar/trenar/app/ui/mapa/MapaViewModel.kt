@@ -3,6 +3,7 @@ package ar.trenar.app.ui.mapa
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.trenar.app.data.model.Arrival
+import ar.trenar.app.data.model.BikeStation
 import ar.trenar.app.data.model.StationRef
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,9 @@ data class MapaUiState(
     val stations: List<StationRef> = emptyList(),
     val trains: List<Arrival> = emptyList(),
     val loadingTrains: Boolean = false,
+    val showBikes: Boolean = false,
+    val bikes: List<BikeStation> = emptyList(),
+    val loadingBikes: Boolean = false,
 )
 
 class MapaViewModel : ViewModel() {
@@ -42,6 +46,18 @@ class MapaViewModel : ViewModel() {
     fun refreshTrains() {
         val line = _state.value.selectedLine
         if (line.isNotBlank()) loadTrains(line)
+    }
+
+    fun toggleBikes() {
+        val showing = !_state.value.showBikes
+        _state.update { it.copy(showBikes = showing) }
+        if (showing && _state.value.bikes.isEmpty()) {
+            viewModelScope.launch {
+                _state.update { it.copy(loadingBikes = true) }
+                val bikes = runCatching { repo.ecobiciStations() }.getOrDefault(emptyList())
+                _state.update { it.copy(bikes = bikes, loadingBikes = false) }
+            }
+        }
     }
 
     private fun loadLine(line: String) {

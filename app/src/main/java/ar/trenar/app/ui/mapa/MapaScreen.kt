@@ -23,8 +23,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -100,6 +103,20 @@ fun MapaScreen(
                     },
                 )
             }
+            item {
+                FilterChip(
+                    selected = state.showBikes,
+                    onClick = { viewModel.toggleBikes() },
+                    label = { Text("Ecobici") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.DirectionsBike,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    },
+                )
+            }
         }
         Box(
             Modifier
@@ -114,9 +131,9 @@ fun MapaScreen(
                     mv.overlays.clear()
                     val argb = LineColors.colorFor(state.selectedLine).toArgb()
                     // Station: small, line-colored, thin white ring.
-                    val stationIcon = buildMarker(ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f)
+                    val stationIcon = buildMarker(ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train)
                     // Live train: bigger, with a bright green "en vivo" ring so it clearly stands out.
-                    val trainIcon = buildMarker(ctx, density, argb, 34f, OnTimeGreen.toArgb(), 3.5f)
+                    val trainIcon = buildMarker(ctx, density, argb, 34f, OnTimeGreen.toArgb(), 3.5f, R.drawable.ic_stat_train)
 
                     state.stations.forEach { st ->
                         val marker = Marker(mv).apply {
@@ -145,6 +162,23 @@ fun MapaScreen(
                         }
                         mv.overlays.add(marker)
                     }
+
+                    if (state.showBikes) {
+                        val bikeIcon = buildMarker(
+                            ctx, density, AndroidColor.parseColor("#F2B705"), 22f,
+                            AndroidColor.WHITE, 2f, R.drawable.ic_bike,
+                        )
+                        state.bikes.forEach { b ->
+                            val marker = Marker(mv).apply {
+                                position = GeoPoint(b.lat, b.lng)
+                                icon = bikeIcon
+                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                                title = "${b.name}: ${b.bikes} bicis · ${b.docks} anclajes"
+                                setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
+                            }
+                            mv.overlays.add(marker)
+                        }
+                    }
                     mv.invalidate()
 
                     if (state.selectedLine != lastFitted.value && state.stations.isNotEmpty()) {
@@ -156,7 +190,7 @@ fun MapaScreen(
                 },
             )
 
-            if (state.loadingTrains) {
+            if (state.loadingTrains || state.loadingBikes) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
                     strokeWidth = 3.dp,
@@ -195,7 +229,7 @@ fun MapaScreen(
     }
 }
 
-/** A circular marker: [fill] core + a [ringColor] ring + a white train glyph. */
+/** A circular marker: [fill] core + a [ringColor] ring + a white [glyphRes] glyph. */
 private fun buildMarker(
     ctx: Context,
     density: Float,
@@ -203,6 +237,7 @@ private fun buildMarker(
     sizeDp: Float,
     ringColor: Int,
     ringWidthDp: Float,
+    glyphRes: Int,
 ): Drawable {
     val size = (sizeDp * density).toInt().coerceAtLeast(8)
     val ringW = ringWidthDp * density
@@ -217,12 +252,12 @@ private fun buildMarker(
         strokeWidth = ringW
     }
     canvas.drawCircle(r, r, r - ringW / 2f - 0.5f, ringPaint)
-    val train = ContextCompat.getDrawable(ctx, R.drawable.ic_stat_train)?.mutate()
-    if (train != null) {
-        train.setTint(AndroidColor.WHITE)
+    val glyph = ContextCompat.getDrawable(ctx, glyphRes)?.mutate()
+    if (glyph != null) {
+        glyph.setTint(AndroidColor.WHITE)
         val inset = (ringW + size * 0.2f).toInt()
-        train.setBounds(inset, inset, size - inset, size - inset)
-        train.draw(canvas)
+        glyph.setBounds(inset, inset, size - inset, size - inset)
+        glyph.draw(canvas)
     }
     return BitmapDrawable(ctx.resources, bmp)
 }

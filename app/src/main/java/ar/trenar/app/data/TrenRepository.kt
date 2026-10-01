@@ -23,6 +23,11 @@ class TrenRepository(
     val catalog: StationCatalog,
 ) {
 
+    private val ecobici = ar.trenar.app.data.remote.EcobiciClient()
+
+    /** Live Ecobici dock stations (public GBFS feed). */
+    suspend fun ecobiciStations(): List<ar.trenar.app.data.model.BikeStation> = ecobici.stations()
+
     suspend fun searchStationsOnline(query: String): List<StationRef> = withContext(Dispatchers.IO) {
         api.searchStations(query).mapNotNull { it.toStationRef() }
     }

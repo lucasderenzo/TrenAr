@@ -28,6 +28,17 @@ data class ServiceAlert(
     val ramalId: Int? = null,
 )
 
+/** An Ecobici dock station with live availability. */
+data class BikeStation(
+    val id: String,
+    val name: String,
+    val lat: Double,
+    val lng: Double,
+    val bikes: Int,
+    val docks: Int,
+    val renting: Boolean,
+)
+
 enum class DelayStatus { ON_TIME, MINOR, MAJOR, CANCELLED, UNKNOWN }
 
 /** A single upcoming train at a station. */
