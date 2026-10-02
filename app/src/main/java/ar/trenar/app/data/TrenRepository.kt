@@ -1,5 +1,6 @@
 package ar.trenar.app.data
 
+import ar.trenar.app.data.local.ScheduleCatalog
 import ar.trenar.app.data.local.StationCatalog
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
@@ -22,6 +23,7 @@ import java.time.Instant
 class TrenRepository(
     private val api: SofseApi,
     val catalog: StationCatalog,
+    private val schedules: ScheduleCatalog,
 ) {
 
     private val ecobici = ar.trenar.app.data.remote.EcobiciClient()
@@ -133,9 +135,17 @@ class TrenRepository(
 
     suspend fun board(stationId: Int, cantidad: Int = 20): BoardState = withContext(Dispatchers.IO) {
         val station = catalog.byId(stationId)
-        // Urquiza / Belgrano Norte: no live feed — return a board flagged for the official-timetable notice.
+        // Urquiza / Belgrano Norte: no live feed — serve the bundled schedule + official-timetable notice.
         if (station != null && !LineInfo.hasRealtime(station.line)) {
             val now = System.currentTimeMillis() / 1000
+            val lineStations = stationsOfLine(station.line).sortedBy { it.id }
+            val index = lineStations.indexOfFirst { it.id == stationId }
+            val scheduled = if (index >= 0) {
+                runCatching { schedules.nextDepartures(station.line, index, now, limit = 10) }
+                    .getOrDefault(emptyList())
+            } else {
+                emptyList()
+            }
             return@withContext BoardState(
                 station = station,
                 arrivals = emptyList(),
@@ -144,6 +154,7 @@ class TrenRepository(
                 realtime = false,
                 scheduleUrl = LineInfo.scheduleUrl(station.line),
                 operator = LineInfo.operator(station.line),
+                scheduled = scheduled,
             )
         }
         val resp = api.arrivals(stationId, cantidad = cantidad)

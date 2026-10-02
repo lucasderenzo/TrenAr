@@ -3,6 +3,7 @@ package ar.trenar.app.di
 import android.content.Context
 import ar.trenar.app.data.TrenRepository
 import ar.trenar.app.data.local.PrefsStore
+import ar.trenar.app.data.local.ScheduleCatalog
 import ar.trenar.app.data.local.StationCatalog
 import ar.trenar.app.data.remote.AuthInterceptor
 import ar.trenar.app.data.remote.SofseApi
@@ -69,7 +70,8 @@ object ServiceLocator {
             val api = retrofit.create(SofseApi::class.java)
 
             val catalog = StationCatalog(app)
-            repository = TrenRepository(api, catalog)
+            val schedules = ScheduleCatalog(app)
+            repository = TrenRepository(api, catalog, schedules)
             prefs = PrefsStore(app)
             location = LocationHelper(app)
             initialized = true

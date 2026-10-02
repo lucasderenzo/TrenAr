@@ -144,7 +144,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.5.0 · Urquiza y Belgrano Norte + mi ubicación en el mapa",
+                        "TrenAr v1.6.0 · horarios programados + mapa de la estación",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

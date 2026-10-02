@@ -93,16 +93,29 @@ data class Arrival(
     }
 }
 
+/** A scheduled (not live) departure inferred from the official timetable. */
+data class ScheduledDeparture(
+    val destination: String,
+    /** Local epoch seconds of the scheduled passage at this station. */
+    val departureEpochSec: Long,
+) {
+    /** Minutes until this scheduled time relative to [nowEpochSec] (can be 0 = "ahora"). */
+    fun minutesUntilAt(nowEpochSec: Long): Int =
+        ((departureEpochSec - nowEpochSec) / 60).coerceAtLeast(0).toInt()
+}
+
 /** Result of loading a station board. */
 data class BoardState(
     val station: StationRef?,
     val arrivals: List<Arrival>,
     val serverTimestamp: Long,
     val loadedAtEpochSec: Long,
-    /** False for lines with no live feed (Urquiza / Belgrano Norte): show the official timetable instead. */
+    /** False for lines with no live feed (Urquiza / Belgrano Norte): show the schedule instead. */
     val realtime: Boolean = true,
     /** Official operator timetable URL, set when [realtime] is false. */
     val scheduleUrl: String? = null,
     /** Operator name for a no-realtime line (e.g. "Metrovías"), set when [realtime] is false. */
     val operator: String? = null,
+    /** Upcoming scheduled departures from the bundled timetable (no-realtime lines). */
+    val scheduled: List<ScheduledDeparture> = emptyList(),
 )

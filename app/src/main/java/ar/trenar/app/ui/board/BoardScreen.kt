@@ -1,5 +1,6 @@
 package ar.trenar.app.ui.board
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,6 +51,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -56,12 +59,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.data.model.Arrival
+import ar.trenar.app.data.model.BoardState
+import ar.trenar.app.data.model.ScheduledDeparture
 import ar.trenar.app.ui.common.CountdownRing
 import ar.trenar.app.ui.common.DelayBadge
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.Format
 import ar.trenar.app.ui.common.FreshnessPill
 import ar.trenar.app.ui.common.LineChip
+import ar.trenar.app.ui.common.StationMiniMap
 import ar.trenar.app.ui.theme.LineColors
 import ar.trenar.app.ui.theme.MajorRed
 import ar.trenar.app.ui.theme.MinorAmber
@@ -175,11 +181,7 @@ private fun BoardContent(
     val arrivals = state.filteredArrivals
 
     if (!board.realtime) {
-        ScheduleNoticeContent(
-            lineName = station?.line.orEmpty(),
-            operator = board.operator,
-            scheduleUrl = board.scheduleUrl,
-        )
+        ScheduleNoticeContent(board = board, nowSec = nowSec)
         return
     }
 
@@ -268,8 +270,11 @@ private fun BoardContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ScheduleNoticeContent(lineName: String, operator: String?, scheduleUrl: String?) {
+private fun ScheduleNoticeContent(board: BoardState, nowSec: Long) {
     val ctx = LocalContext.current
+    val station = board.station
+    val operator = board.operator
+    val scheduleUrl = board.scheduleUrl
     val openSchedule = {
         scheduleUrl?.let { url ->
             runCatching {
@@ -280,72 +285,172 @@ private fun ScheduleNoticeContent(lineName: String, operator: String?, scheduleU
         }
         Unit
     }
-    val operatorText = operator?.let { " la opera $it y" } ?: ""
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Card(
-            onClick = openSchedule,
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MinorAmber.copy(alpha = 0.14f)),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Filled.Schedule,
-                        contentDescription = null,
-                        tint = MinorAmber,
-                        modifier = Modifier.size(26.dp),
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "Sin información en tiempo real",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                Text(
-                    buildString {
-                        append("La línea ")
-                        append(lineName.ifBlank { "esta" })
-                        append(operatorText)
-                        append(" todavía no publica llegadas en vivo. ")
-                        append("Consultá los horarios en la fuente oficial.")
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (scheduleUrl != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Ver horario oficial" + (operator?.let { " · $it" } ?: ""),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            textDecoration = TextDecoration.Underline,
+        if (station != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(20.dp))) {
+                        StationMiniMap(
+                            lat = station.lat,
+                            lng = station.lng,
+                            label = station.name,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
             }
         }
-        Text(
-            "Igual podés marcarla como favorita con la estrella de arriba.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
+
+        item {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Schedule,
+                    contentDescription = null,
+                    tint = MinorAmber,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Horarios programados",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                if (scheduleUrl != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { openSchedule() },
+                    ) {
+                        Text(
+                            "Horario oficial",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            Icons.Filled.OpenInNew,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
+            }
+        }
+
+        if (board.scheduled.isEmpty()) {
+            item {
+                Card(
+                    onClick = openSchedule,
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MinorAmber.copy(alpha = 0.14f)),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            "Sin información en tiempo real",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            buildString {
+                                append("Esta línea")
+                                operator?.let { append(" la opera $it y") }
+                                append(" no publica llegadas en vivo. Consultá el horario oficial.")
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        } else {
+            items(board.scheduled, key = { it.destination + it.departureEpochSec }) { dep ->
+                ScheduledCard(dep = dep, nowSec = nowSec)
+            }
+            item {
+                Text(
+                    "Horarios programados según la fuente oficial" +
+                        (operator?.let { " ($it)" } ?: "") +
+                        ". No reflejan demoras en tiempo real.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                )
+            }
+        }
+
+        item { Spacer(Modifier.size(24.dp)) }
+    }
+}
+
+@Composable
+private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
+    val minutes = dep.minutesUntilAt(nowSec)
+    val clock = remember(dep.departureEpochSec) {
+        val t = java.time.Instant.ofEpochSecond(dep.departureEpochSec)
+            .atZone(java.time.ZoneId.of("America/Argentina/Buenos_Aires"))
+            .toLocalTime()
+        "%02d:%02d".format(t.hour, t.minute)
+    }
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "a ${dep.destination}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.size(3.dp))
+                Text(
+                    "Horario programado · $clock",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MinorAmber,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = if (minutes <= 0) "ahora" else "$minutes",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (minutes > 0) {
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "min",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
