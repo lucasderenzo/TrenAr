@@ -19,7 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.StarOutline
@@ -43,8 +45,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -109,14 +114,16 @@ fun BoardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.toggleFollow() }) {
-                        Icon(
-                            if (state.isTracking) Icons.Filled.NotificationsActive
-                            else Icons.Outlined.NotificationsNone,
-                            contentDescription = "Seguir este tren",
-                            tint = if (state.isTracking) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    if (state.board?.realtime != false) {
+                        IconButton(onClick = { viewModel.toggleFollow() }) {
+                            Icon(
+                                if (state.isTracking) Icons.Filled.NotificationsActive
+                                else Icons.Outlined.NotificationsNone,
+                                contentDescription = "Seguir este tren",
+                                tint = if (state.isTracking) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     IconButton(onClick = { viewModel.toggleFavorite() }) {
                         Icon(
@@ -166,6 +173,15 @@ private fun BoardContent(
     val board = state.board ?: return
     val station = board.station
     val arrivals = state.filteredArrivals
+
+    if (!board.realtime) {
+        ScheduleNoticeContent(
+            lineName = station?.line.orEmpty(),
+            operator = board.operator,
+            scheduleUrl = board.scheduleUrl,
+        )
+        return
+    }
 
     val radarTrains = remember(board.arrivals) {
         if (station == null) emptyList()
@@ -247,6 +263,89 @@ private fun BoardContent(
         }
 
         item { Spacer(Modifier.size(24.dp)) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScheduleNoticeContent(lineName: String, operator: String?, scheduleUrl: String?) {
+    val ctx = LocalContext.current
+    val openSchedule = {
+        scheduleUrl?.let { url ->
+            runCatching {
+                ctx.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }
+        Unit
+    }
+    val operatorText = operator?.let { " la opera $it y" } ?: ""
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Card(
+            onClick = openSchedule,
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MinorAmber.copy(alpha = 0.14f)),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Schedule,
+                        contentDescription = null,
+                        tint = MinorAmber,
+                        modifier = Modifier.size(26.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "Sin información en tiempo real",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Text(
+                    buildString {
+                        append("La línea ")
+                        append(lineName.ifBlank { "esta" })
+                        append(operatorText)
+                        append(" todavía no publica llegadas en vivo. ")
+                        append("Consultá los horarios en la fuente oficial.")
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (scheduleUrl != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Filled.OpenInNew,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Ver horario oficial" + (operator?.let { " · $it" } ?: ""),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline,
+                        )
+                    }
+                }
+            }
+        }
+        Text(
+            "Igual podés marcarla como favorita con la estrella de arriba.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
     }
 }
 

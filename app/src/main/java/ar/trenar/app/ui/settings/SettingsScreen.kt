@@ -144,7 +144,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.4.0 · Ecobici + mapa mejorado",
+                        "TrenAr v1.5.0 · Urquiza y Belgrano Norte + mi ubicación en el mapa",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

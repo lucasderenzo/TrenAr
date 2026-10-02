@@ -1,5 +1,6 @@
 package ar.trenar.app.ui.mapa
 
+import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -38,6 +40,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -50,10 +53,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.R
+import ar.trenar.app.data.LineInfo
+import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.ui.common.LineBadge
 import ar.trenar.app.ui.common.TabHeader
 import ar.trenar.app.ui.theme.LineColors
 import ar.trenar.app.ui.theme.OnTimeGreen
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.launch
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -62,7 +71,9 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
 private const val ECOBICI_YELLOW = "#F2B705"
+private const val LOCATION_BLUE = "#1E88E5"
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapaScreen(
     onOpenStation: (Int) -> Unit,
@@ -71,6 +82,9 @@ fun MapaScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     val density = ctx.resources.displayMetrics.density
+    val scope = rememberCoroutineScope()
+    val locationPermission = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val myLocation = remember { mutableStateOf<GeoPoint?>(null) }
 
     val mapView = remember {
         MapView(ctx).apply {
@@ -89,6 +103,23 @@ fun MapaScreen(
         onDispose {
             mapView.onPause()
             mapView.onDetach()
+        }
+    }
+
+    val locate = {
+        if (!locationPermission.status.isGranted) {
+            locationPermission.launchPermissionRequest()
+        } else {
+            scope.launch {
+                val loc = runCatching { ServiceLocator.location.current() }.getOrNull()
+                if (loc != null) {
+                    val gp = GeoPoint(loc.latitude, loc.longitude)
+                    myLocation.value = gp
+                    mapView.controller.animateTo(gp)
+                    mapView.controller.setZoom(15.0)
+                }
+            }
+            Unit
         }
     }
 
@@ -167,6 +198,19 @@ fun MapaScreen(
                             }.also { mv.overlays.add(it) }
                         }
                     }
+                    myLocation.value?.let { gp ->
+                        val personIcon = buildMarker(
+                            ctx, density, AndroidColor.parseColor(LOCATION_BLUE), 26f,
+                            AndroidColor.WHITE, 3f, R.drawable.ic_person,
+                        )
+                        Marker(mv).apply {
+                            position = gp
+                            icon = personIcon
+                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                            title = "Estás acá"
+                            setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
+                        }.also { mv.overlays.add(it) }
+                    }
                     mv.invalidate()
 
                     if (state.selected != lastFitted.value) {
@@ -208,8 +252,12 @@ fun MapaScreen(
                     )
                     Spacer(Modifier.width(7.dp))
                     Text(
-                        text = if (state.isBikes) "Ecobici · ${state.bikes.size} estaciones"
-                        else "${state.selected} · ${state.trains.size} en vivo",
+                        text = when {
+                            state.isBikes -> "Ecobici · ${state.bikes.size} estaciones"
+                            !LineInfo.hasRealtime(state.selected) ->
+                                "${state.selected} · ${state.stations.size} estaciones · sin vivo"
+                            else -> "${state.selected} · ${state.trains.size} en vivo"
+                        },
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.SemiBold,
@@ -217,11 +265,12 @@ fun MapaScreen(
                 }
             }
 
-            // Zoom buttons (bottom-right, same height as the pill)
+            // Location + zoom buttons (bottom-right, same height as the pill)
             Column(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                ZoomButton(Icons.Filled.MyLocation, "Mi ubicación") { locate() }
                 ZoomButton(Icons.Filled.Add, "Acercar") { mapView.controller.zoomIn() }
                 ZoomButton(Icons.Filled.Remove, "Alejar") { mapView.controller.zoomOut() }
             }

@@ -62,6 +62,9 @@ class TrenRepository(
 
     /** Soonest upcoming train at a station, or null if none / no service. */
     suspend fun nextArrival(stationId: Int): Arrival? = withContext(Dispatchers.IO) {
+        // Lines without a live feed (Urquiza / Belgrano Norte) have no arrivals to fetch.
+        val st = catalog.byId(stationId)
+        if (st != null && !LineInfo.hasRealtime(st.line)) return@withContext null
         val resp = runCatching { api.arrivals(stationId, cantidad = 4) }.getOrNull() ?: return@withContext null
         val serverTs = if (resp.timestamp > 0) resp.timestamp else System.currentTimeMillis() / 1000
         resp.results.mapNotNull { it.toArrival(serverTs) }
@@ -73,10 +76,13 @@ class TrenRepository(
     suspend fun stationsOfLine(line: String): List<StationRef> =
         catalog.all().filter { it.line.equals(line, ignoreCase = true) }
 
-    /** The list of SOFSE lines that actually have stations, in display order. */
+    /** The list of lines that actually have stations, in display order. */
     suspend fun availableLines(): List<String> {
         val present = catalog.all().map { it.line }.filter { it.isNotBlank() }.toSet()
-        val order = listOf("Sarmiento", "Mitre", "Roca", "San Martín", "Belgrano Sur", "Tren de la Costa", "Regionales")
+        val order = listOf(
+            "Sarmiento", "Mitre", "Roca", "San Martín", "Belgrano Sur",
+            "Tren de la Costa", "Urquiza", "Belgrano Norte", "Regionales",
+        )
         return order.filter { it in present } + present.filter { it !in order }
     }
 
@@ -85,6 +91,7 @@ class TrenRepository(
      * line and collects the services that carry a GPS position.
      */
     suspend fun liveTrains(line: String, sampleStations: Int = 12): List<Arrival> = coroutineScope {
+        if (!LineInfo.hasRealtime(line)) return@coroutineScope emptyList()
         val stations = stationsOfLine(line)
         if (stations.isEmpty()) return@coroutineScope emptyList()
         val step = (stations.size / sampleStations).coerceAtLeast(1)
@@ -126,6 +133,19 @@ class TrenRepository(
 
     suspend fun board(stationId: Int, cantidad: Int = 20): BoardState = withContext(Dispatchers.IO) {
         val station = catalog.byId(stationId)
+        // Urquiza / Belgrano Norte: no live feed — return a board flagged for the official-timetable notice.
+        if (station != null && !LineInfo.hasRealtime(station.line)) {
+            val now = System.currentTimeMillis() / 1000
+            return@withContext BoardState(
+                station = station,
+                arrivals = emptyList(),
+                serverTimestamp = now,
+                loadedAtEpochSec = now,
+                realtime = false,
+                scheduleUrl = LineInfo.scheduleUrl(station.line),
+                operator = LineInfo.operator(station.line),
+            )
+        }
         val resp = api.arrivals(stationId, cantidad = cantidad)
         val serverTs = if (resp.timestamp > 0) resp.timestamp else System.currentTimeMillis() / 1000
         val arrivals = resp.results

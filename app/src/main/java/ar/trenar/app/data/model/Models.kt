@@ -99,4 +99,10 @@ data class BoardState(
     val arrivals: List<Arrival>,
     val serverTimestamp: Long,
     val loadedAtEpochSec: Long,
+    /** False for lines with no live feed (Urquiza / Belgrano Norte): show the official timetable instead. */
+    val realtime: Boolean = true,
+    /** Official operator timetable URL, set when [realtime] is false. */
+    val scheduleUrl: String? = null,
+    /** Operator name for a no-realtime line (e.g. "Metrovías"), set when [realtime] is false. */
+    val operator: String? = null,
 )
