@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -117,14 +116,6 @@ fun BoardScreen(
                             contentDescription = "Seguir este tren",
                             tint = if (state.isTracking) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    IconButton(onClick = { viewModel.pinToWidget() }) {
-                        Icon(
-                            Icons.Filled.PushPin,
-                            contentDescription = "Fijar en widget",
-                            tint = if (state.isPinned) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         )
                     }
                     IconButton(onClick = { viewModel.toggleFavorite() }) {

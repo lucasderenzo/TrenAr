@@ -9,6 +9,7 @@ import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.data.remote.SofseApi
 import ar.trenar.app.data.remote.dto.ArrivalResult
 import ar.trenar.app.data.remote.dto.StationDto
+import ar.trenar.app.util.Geo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -27,6 +28,25 @@ class TrenRepository(
 
     /** Live Ecobici dock stations (public GBFS feed). */
     suspend fun ecobiciStations(): List<ar.trenar.app.data.model.BikeStation> = ecobici.stations()
+
+    /** Nearest Ecobici stations to a point, with distance + walking time. */
+    suspend fun nearestBikes(
+        lat: Double,
+        lng: Double,
+        limit: Int = 10,
+    ): List<ar.trenar.app.data.model.BikeNearby> {
+        return ecobici.stations()
+            .map { it to Geo.haversine(lat, lng, it.lat, it.lng) }
+            .sortedBy { it.second }
+            .take(limit)
+            .map { (st, dist) ->
+                ar.trenar.app.data.model.BikeNearby(
+                    station = st,
+                    distanceMeters = dist,
+                    walkSeconds = (dist / 1.35).toInt(),
+                )
+            }
+    }
 
     suspend fun searchStationsOnline(query: String): List<StationRef> = withContext(Dispatchers.IO) {
         api.searchStations(query).mapNotNull { it.toStationRef() }

@@ -21,7 +21,7 @@ object WidgetUpdater {
 
         ServiceLocator.init(app)
         val prefs = ServiceLocator.prefs
-        val pinned = prefs.pinnedNow()
+        val pinned = prefs.favoritesNow().firstOrNull()
 
         val views = RemoteViews(app.packageName, R.layout.widget_next_train)
 

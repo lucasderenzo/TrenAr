@@ -9,7 +9,6 @@ import ar.trenar.app.data.model.BoardState
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.notifications.TrainTrackService
 import ar.trenar.app.util.Geo
-import ar.trenar.app.widget.WidgetUpdater
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,7 +20,6 @@ data class BoardUiState(
     val board: BoardState? = null,
     val error: String? = null,
     val isFavorite: Boolean = false,
-    val isPinned: Boolean = false,
     val isTracking: Boolean = false,
     val walkSeconds: Int? = null,
     val filterDestination: String? = null,
@@ -48,11 +46,6 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
         viewModelScope.launch {
             prefs.favorites.collect { ids ->
                 _state.update { it.copy(isFavorite = ids.contains(stationId)) }
-            }
-        }
-        viewModelScope.launch {
-            prefs.pinnedStation.collect { pin ->
-                _state.update { it.copy(isPinned = pin == stationId) }
             }
         }
         viewModelScope.launch {
@@ -104,13 +97,9 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
     }
 
     fun toggleFavorite() {
-        viewModelScope.launch { prefs.toggleFavorite(stationId) }
-    }
-
-    fun pinToWidget() {
         viewModelScope.launch {
-            prefs.setPinned(stationId)
-            runCatching { WidgetUpdater.updateAll(ServiceLocator.appContext) }
+            prefs.toggleFavorite(stationId)
+            runCatching { ar.trenar.app.widget.WidgetUpdater.updateAll(ServiceLocator.appContext) }
         }
     }
 

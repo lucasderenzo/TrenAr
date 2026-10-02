@@ -8,19 +8,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.trenar.app.ui.common.BikeStationRow
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.StationArrivalRow
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -69,6 +72,28 @@ fun CercanasScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item { CercanasHeader(onOpenSearch) }
+        item {
+            Row(
+                Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = state.mode == CercanasMode.TREN,
+                    onClick = { viewModel.setMode(CercanasMode.TREN) },
+                    label = { Text("Tren") },
+                    leadingIcon = { Icon(Icons.Filled.Train, contentDescription = null, modifier = Modifier.width(20.dp)) },
+                )
+                FilterChip(
+                    selected = state.mode == CercanasMode.ECOBICI,
+                    onClick = { viewModel.setMode(CercanasMode.ECOBICI) },
+                    label = { Text("Ecobici") },
+                    leadingIcon = { Icon(Icons.Filled.DirectionsBike, contentDescription = null, modifier = Modifier.width(20.dp)) },
+                )
+            }
+        }
+
+        val tren = state.mode == CercanasMode.TREN
+        val empty = if (tren) state.items.isEmpty() else state.bikeItems.isEmpty()
 
         when {
             !permission.status.isGranted -> item {
@@ -77,7 +102,7 @@ fun CercanasScreen(
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
-            state.loading && state.items.isEmpty() -> item {
+            state.loading && empty -> item {
                 Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -89,20 +114,23 @@ fun CercanasScreen(
                     subtitle = "Activá el GPS y probá de nuevo, o buscá tu estación.",
                 )
             }
-            state.items.isEmpty() -> item {
+            empty -> item {
                 EmptyState(
-                    icon = Icons.Outlined.NearMe,
-                    title = "Sin estaciones cerca",
-                    subtitle = "Buscá tu estación por nombre.",
+                    icon = if (tren) Icons.Outlined.NearMe else Icons.Filled.DirectionsBike,
+                    title = if (tren) "Sin estaciones cerca" else "Sin Ecobici cerca",
+                    subtitle = if (tren) "Buscá tu estación por nombre." else "No encontramos estaciones de Ecobici cerca tuyo.",
                 )
             }
-            else -> items(state.items, key = { it.station.id }) { item ->
+            tren -> items(state.items, key = { it.station.id }) { item ->
                 StationArrivalRow(
                     item = item,
                     nowSec = nowSec,
                     onClick = { onOpenStation(item.station.id) },
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
+            }
+            else -> items(state.bikeItems, key = { it.station.id }) { item ->
+                BikeStationRow(item = item, modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
 
@@ -140,13 +168,13 @@ private fun LocationPrompt(onGrant: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                "Encontrá tus estaciones cercanas",
+                "Encontrá lo que tenés cerca",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "Con tu ubicación te mostramos al instante las estaciones más próximas y cuándo llega el próximo tren.",
+                "Con tu ubicación te mostramos las estaciones de tren y las de Ecobici más próximas.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )

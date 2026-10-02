@@ -13,14 +13,14 @@ import kotlinx.coroutines.launch
 
 data class MapaUiState(
     val lines: List<String> = emptyList(),
-    val selectedLine: String = "",
+    val selected: String = "",          // a line name, or ECOBICI
     val stations: List<StationRef> = emptyList(),
     val trains: List<Arrival> = emptyList(),
-    val loadingTrains: Boolean = false,
-    val showBikes: Boolean = false,
     val bikes: List<BikeStation> = emptyList(),
-    val loadingBikes: Boolean = false,
-)
+    val loading: Boolean = false,
+) {
+    val isBikes: Boolean get() = selected == MapaViewModel.ECOBICI
+}
 
 class MapaViewModel : ViewModel() {
 
@@ -32,50 +32,47 @@ class MapaViewModel : ViewModel() {
         viewModelScope.launch {
             val lines = repo.availableLines()
             val first = lines.firstOrNull() ?: ""
-            _state.update { it.copy(lines = lines, selectedLine = first) }
+            _state.update { it.copy(lines = lines, selected = first) }
             if (first.isNotBlank()) loadLine(first)
         }
     }
 
-    fun selectLine(line: String) {
-        if (line == _state.value.selectedLine && _state.value.stations.isNotEmpty()) return
-        _state.update { it.copy(selectedLine = line) }
-        loadLine(line)
+    fun select(chip: String) {
+        if (chip == _state.value.selected) return
+        _state.update { it.copy(selected = chip) }
+        if (chip == ECOBICI) loadBikes() else loadLine(chip)
     }
 
-    fun refreshTrains() {
-        val line = _state.value.selectedLine
-        if (line.isNotBlank()) loadTrains(line)
-    }
-
-    fun toggleBikes() {
-        val showing = !_state.value.showBikes
-        _state.update { it.copy(showBikes = showing) }
-        if (showing && _state.value.bikes.isEmpty()) {
-            viewModelScope.launch {
-                _state.update { it.copy(loadingBikes = true) }
-                val bikes = runCatching { repo.ecobiciStations() }.getOrDefault(emptyList())
-                _state.update { it.copy(bikes = bikes, loadingBikes = false) }
-            }
-        }
+    fun refresh() {
+        val sel = _state.value.selected
+        if (sel == ECOBICI) loadBikes(force = true) else if (sel.isNotBlank()) loadLine(sel)
     }
 
     private fun loadLine(line: String) {
         viewModelScope.launch {
             val stations = repo.stationsOfLine(line)
-            _state.update { it.copy(stations = stations, trains = emptyList()) }
-            loadTrains(line)
+            _state.update { it.copy(stations = stations, trains = emptyList(), loading = true) }
+            val trains = runCatching { repo.liveTrains(line) }.getOrDefault(emptyList())
+            _state.update {
+                if (it.selected == line) it.copy(trains = trains, loading = false)
+                else it.copy(loading = false)
+            }
         }
     }
 
-    private fun loadTrains(line: String) {
+    private fun loadBikes(force: Boolean = false) {
         viewModelScope.launch {
-            _state.update { it.copy(loadingTrains = true) }
-            val trains = runCatching { repo.liveTrains(line) }.getOrDefault(emptyList())
+            if (!force && _state.value.bikes.isNotEmpty()) return@launch
+            _state.update { it.copy(loading = true) }
+            val bikes = runCatching { repo.ecobiciStations() }.getOrDefault(emptyList())
             _state.update {
-                if (it.selectedLine == line) it.copy(trains = trains, loadingTrains = false)
-                else it.copy(loadingTrains = false)
+                if (it.selected == ECOBICI) it.copy(bikes = bikes, loading = false)
+                else it.copy(bikes = bikes, loading = false)
             }
         }
+    }
+
+    companion object {
+        const val ECOBICI = "Ecobici"
     }
 }

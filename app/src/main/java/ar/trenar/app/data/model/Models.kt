@@ -39,6 +39,13 @@ data class BikeStation(
     val renting: Boolean,
 )
 
+/** A nearby Ecobici station with distance + walking time. */
+data class BikeNearby(
+    val station: BikeStation,
+    val distanceMeters: Double,
+    val walkSeconds: Int,
+)
+
 enum class DelayStatus { ON_TIME, MINOR, MAJOR, CANCELLED, UNKNOWN }
 
 /** A single upcoming train at a station. */

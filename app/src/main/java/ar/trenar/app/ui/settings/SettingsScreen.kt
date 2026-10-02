@@ -144,7 +144,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.3.0 · + seguir tren y salí ya",
+                        "TrenAr v1.4.0 · Ecobici + mapa mejorado",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
