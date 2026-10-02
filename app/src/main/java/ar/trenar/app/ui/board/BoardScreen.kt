@@ -17,9 +17,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.WifiOff
@@ -56,6 +59,9 @@ import ar.trenar.app.ui.common.Format
 import ar.trenar.app.ui.common.FreshnessPill
 import ar.trenar.app.ui.common.LineChip
 import ar.trenar.app.ui.theme.LineColors
+import ar.trenar.app.ui.theme.MajorRed
+import ar.trenar.app.ui.theme.MinorAmber
+import ar.trenar.app.ui.theme.OnTimeGreen
 import ar.trenar.app.util.Geo
 import kotlinx.coroutines.delay
 
@@ -104,6 +110,15 @@ fun BoardScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.toggleFollow() }) {
+                        Icon(
+                            if (state.isTracking) Icons.Filled.NotificationsActive
+                            else Icons.Outlined.NotificationsNone,
+                            contentDescription = "Seguir este tren",
+                            tint = if (state.isTracking) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     IconButton(onClick = { viewModel.pinToWidget() }) {
                         Icon(
                             Icons.Filled.PushPin,
@@ -181,6 +196,12 @@ private fun BoardContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        val walk = state.walkSeconds
+        val soonest = board.arrivals.firstOrNull { !it.cancelled }
+        if (walk != null && soonest != null) {
+            item { SaliYaCard(walkSeconds = walk, arrival = soonest, nowSec = nowSec) }
+        }
+
         item {
             Card(
                 shape = RoundedCornerShape(20.dp),
@@ -235,6 +256,55 @@ private fun BoardContent(
         }
 
         item { Spacer(Modifier.size(24.dp)) }
+    }
+}
+
+@Composable
+private fun SaliYaCard(walkSeconds: Int, arrival: Arrival, nowSec: Long) {
+    val eta = arrival.etaSecondsAt(nowSec) ?: return
+    val leave = eta - walkSeconds
+    val goNow = leave <= 0
+    val urgent = leave in 1..119
+    val accent = when {
+        goNow -> MajorRed
+        urgent -> MinorAmber
+        else -> OnTimeGreen
+    }
+    val title = when {
+        goNow -> "¡Salí ya!"
+        leave < 60 -> "Salí en menos de 1 min"
+        else -> "Salí en ${leave / 60} min"
+    }
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.12f)),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            Modifier.padding(14.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Filled.DirectionsWalk,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(28.dp),
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = accent,
+                )
+                Text(
+                    "~${(walkSeconds / 60).coerceAtLeast(1)} min caminando · tren a ${arrival.destination} en ${eta / 60} min",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

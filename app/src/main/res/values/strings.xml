@@ -11,4 +11,6 @@
     <string name="channel_delays_desc">Avisos de demoras, cancelaciones y estado del servicio.</string>
     <string name="channel_leave_name">Salí ahora</string>
     <string name="channel_leave_desc">Recordatorios para salir a tiempo hacia tu estación.</string>
+    <string name="channel_track_name">Seguimiento de tren</string>
+    <string name="channel_track_desc">Cuenta regresiva del próximo tren mientras seguís una estación.</string>
 </resources>

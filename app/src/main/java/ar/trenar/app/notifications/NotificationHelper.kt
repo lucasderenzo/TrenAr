@@ -17,6 +17,7 @@ object NotificationHelper {
 
     const val CHANNEL_DELAYS = "delays"
     const val CHANNEL_LEAVE = "leave_now"
+    const val CHANNEL_TRACK = "tracking"
 
     fun ensureChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
@@ -30,8 +31,17 @@ object NotificationHelper {
             context.getString(R.string.channel_leave_name),
             NotificationManager.IMPORTANCE_HIGH,
         ).apply { description = context.getString(R.string.channel_leave_desc) }
+        val track = NotificationChannel(
+            CHANNEL_TRACK,
+            context.getString(R.string.channel_track_name),
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = context.getString(R.string.channel_track_desc)
+            setShowBadge(false)
+        }
         nm.createNotificationChannel(delays)
         nm.createNotificationChannel(leave)
+        nm.createNotificationChannel(track)
     }
 
     fun canPost(context: Context): Boolean {
