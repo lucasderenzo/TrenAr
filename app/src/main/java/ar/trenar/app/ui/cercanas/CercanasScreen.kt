@@ -105,7 +105,7 @@ fun CercanasScreen(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                listOf(500 to "500 m", 1000 to "1 km", 1500 to "1,5 km").forEach { (m, label) ->
+                listOf(1000 to "1 km", 3000 to "3 km", Int.MAX_VALUE to "Sin radio").forEach { (m, label) ->
                     FilterChip(
                         selected = state.radiusMeters == m,
                         onClick = { viewModel.setRadius(m) },

@@ -20,8 +20,7 @@ data class CercanasUiState(
     val loading: Boolean = false,
     val locationDenied: Boolean = false,
     val locationUnavailable: Boolean = false,
-    val radiusMeters: Int = 1500,
-    val perLine: Int = 1,
+    val radiusMeters: Int = 1000,
     val bikeFavorites: Set<String> = emptySet(),
 )
 
@@ -39,9 +38,6 @@ class CercanasViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             prefs.nearbyRadiusMeters.collect { r -> _state.update { it.copy(radiusMeters = r) } }
-        }
-        viewModelScope.launch {
-            prefs.nearbyPerLine.collect { n -> _state.update { it.copy(perLine = n) } }
         }
         viewModelScope.launch {
             prefs.bikeFavorites.collect { f -> _state.update { it.copy(bikeFavorites = f) } }
@@ -67,13 +63,6 @@ class CercanasViewModel : ViewModel() {
         load(_state.value.mode, force = true)
     }
 
-    fun setPerLine(count: Int) {
-        if (count == _state.value.perLine) return
-        viewModelScope.launch { prefs.setNearbyPerLine(count) }
-        _state.update { it.copy(perLine = count) }
-        if (_state.value.mode == CercanasMode.TREN) load(CercanasMode.TREN, force = true)
-    }
-
     fun toggleBikeFavorite(id: String) {
         viewModelScope.launch { prefs.toggleBikeFavorite(id) }
     }
@@ -94,7 +83,7 @@ class CercanasViewModel : ViewModel() {
                 val radius = _state.value.radiusMeters
                 when (mode) {
                     CercanasMode.TREN -> {
-                        val near = repo.nearestStationsByLine(loc.latitude, loc.longitude, radius, _state.value.perLine)
+                        val near = repo.nearestStationsInRadius(loc.latitude, loc.longitude, radius, cap = 20)
                         _state.update {
                             it.copy(items = near.map { s -> StationWithNext(s, null, loading = true) }, loading = false)
                         }
@@ -104,7 +93,7 @@ class CercanasViewModel : ViewModel() {
                         }
                     }
                     CercanasMode.ECOBICI -> {
-                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius)
+                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius, limit = 20)
                         _state.update { it.copy(bikeItems = bikes, loading = false) }
                     }
                 }

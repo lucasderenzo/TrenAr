@@ -195,7 +195,7 @@ private fun BoardContent(
     val arrivals = state.filteredArrivals
 
     if (!board.realtime) {
-        ScheduleNoticeContent(board = board, nowSec = nowSec)
+        ScheduleNoticeContent(board = board, nowSec = nowSec, walkSeconds = state.walkSeconds)
         return
     }
 
@@ -217,8 +217,9 @@ private fun BoardContent(
     ) {
         val walk = state.walkSeconds
         val soonest = board.arrivals.firstOrNull { !it.cancelled }
-        if (walk != null && soonest != null) {
-            item { SaliYaCard(walkSeconds = walk, arrival = soonest, nowSec = nowSec) }
+        val soonestEta = soonest?.etaSecondsAt(nowSec)
+        if (walk != null && soonest != null && soonestEta != null) {
+            item { SaliYaCard(walkSeconds = walk, etaSeconds = soonestEta, destination = soonest.destination) }
         }
 
         if (station != null) {
@@ -300,9 +301,10 @@ private fun BoardContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ScheduleNoticeContent(board: BoardState, nowSec: Long) {
+private fun ScheduleNoticeContent(board: BoardState, nowSec: Long, walkSeconds: Int?) {
     val ctx = LocalContext.current
     val station = board.station
+    val nextDep = board.scheduled.firstOrNull()
     val operator = board.operator
     val scheduleUrl = board.scheduleUrl
     val openSchedule = {
@@ -321,6 +323,12 @@ private fun ScheduleNoticeContent(board: BoardState, nowSec: Long) {
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        if (walkSeconds != null && nextDep != null) {
+            val eta = (nextDep.departureEpochSec - nowSec).toInt()
+            if (eta >= 0) {
+                item { SaliYaCard(walkSeconds = walkSeconds, etaSeconds = eta, destination = nextDep.destination) }
+            }
+        }
         if (station != null) {
             item {
                 Card(
@@ -485,8 +493,8 @@ private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
 }
 
 @Composable
-private fun SaliYaCard(walkSeconds: Int, arrival: Arrival, nowSec: Long) {
-    val eta = arrival.etaSecondsAt(nowSec) ?: return
+private fun SaliYaCard(walkSeconds: Int, etaSeconds: Int, destination: String) {
+    val eta = etaSeconds
     val leave = eta - walkSeconds
     val goNow = leave <= 0
     val urgent = leave in 1..119
@@ -524,7 +532,7 @@ private fun SaliYaCard(walkSeconds: Int, arrival: Arrival, nowSec: Long) {
                     color = accent,
                 )
                 Text(
-                    "~${(walkSeconds / 60).coerceAtLeast(1)} min caminando · tren a ${arrival.destination} en ${eta / 60} min",
+                    "~${(walkSeconds / 60).coerceAtLeast(1)} min caminando · tren a $destination en ${eta / 60} min",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

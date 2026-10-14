@@ -90,13 +90,13 @@ class TrenRepository(
     suspend fun nearestStations(lat: Double, lng: Double, limit: Int = 8): List<StationRef> =
         catalog.nearest(lat, lng, limit)
 
-    /** Nearest stations within a radius, at most [perLine] per line. */
-    suspend fun nearestStationsByLine(
+    /** All stations within a radius (Int.MAX_VALUE = no limit), nearest first, capped. */
+    suspend fun nearestStationsInRadius(
         lat: Double,
         lng: Double,
-        radiusMeters: Int = 1500,
-        perLine: Int = 1,
-    ): List<StationRef> = catalog.nearestByLine(lat, lng, radiusMeters, perLine)
+        radiusMeters: Int = 1000,
+        cap: Int = 20,
+    ): List<StationRef> = catalog.nearestInRadius(lat, lng, radiusMeters, cap)
 
     suspend fun station(id: Int): StationRef? = catalog.byId(id)
 

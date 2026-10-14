@@ -51,29 +51,20 @@ class StationCatalog(private val context: Context) {
             .take(limit)
 
     /**
-     * Nearest stations within [radiusMeters], keeping at most [perLine] per line (the closest ones).
-     * The result is sorted by distance. If nothing falls inside the radius, returns the single
-     * closest station per line (so the screen is never empty just because the user set a small radius).
+     * All stations within [radiusMeters] (pass Int.MAX_VALUE for no limit), nearest first, capped at
+     * [cap]. If nothing falls inside the radius, returns the single closest station so it's never empty.
      */
-    suspend fun nearestByLine(
+    suspend fun nearestInRadius(
         lat: Double,
         lng: Double,
-        radiusMeters: Int = 1500,
-        perLine: Int = 1,
+        radiusMeters: Int = 1000,
+        cap: Int = 20,
     ): List<StationRef> {
-        val withDist = all().map { it.copy(distanceMeters = Geo.haversine(lat, lng, it.lat, it.lng)) }
-        val inRadius = withDist.filter { (it.distanceMeters ?: Double.MAX_VALUE) <= radiusMeters }
-        val pool = inRadius.ifEmpty {
-            // fall back to each line's single nearest so we always show something
-            withDist.groupBy { it.line }
-                .mapNotNull { (_, v) -> v.minByOrNull { d -> d.distanceMeters ?: Double.MAX_VALUE } }
-        }
-        return pool
-            .groupBy { it.line }
-            .flatMap { (_, v) ->
-                v.sortedBy { it.distanceMeters ?: Double.MAX_VALUE }.take(perLine.coerceIn(1, 3))
-            }
+        val withDist = all()
+            .map { it.copy(distanceMeters = Geo.haversine(lat, lng, it.lat, it.lng)) }
             .sortedBy { it.distanceMeters ?: Double.MAX_VALUE }
+        val inRadius = withDist.filter { (it.distanceMeters ?: Double.MAX_VALUE) <= radiusMeters.toDouble() }
+        return inRadius.ifEmpty { withDist.take(1) }.take(cap)
     }
 
     suspend fun search(query: String): List<StationRef> {
