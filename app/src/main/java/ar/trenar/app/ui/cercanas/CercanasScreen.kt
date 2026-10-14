@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.ui.common.BikeStationRow
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.StationArrivalRow
+import ar.trenar.app.util.MapsIntent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -55,6 +57,7 @@ fun CercanasScreen(
     viewModel: CercanasViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val ctx = LocalContext.current
     val permission = rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION)
     var nowSec by remember { mutableLongStateOf(System.currentTimeMillis() / 1000) }
 
@@ -89,6 +92,26 @@ fun CercanasScreen(
                     label = { Text("Ecobici") },
                     leadingIcon = { Icon(Icons.Filled.DirectionsBike, contentDescription = null, modifier = Modifier.width(20.dp)) },
                 )
+            }
+        }
+        item {
+            Row(
+                Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Radio",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                listOf(500 to "500 m", 1000 to "1 km", 1500 to "1,5 km").forEach { (m, label) ->
+                    FilterChip(
+                        selected = state.radiusMeters == m,
+                        onClick = { viewModel.setRadius(m) },
+                        label = { Text(label) },
+                    )
+                }
             }
         }
 
@@ -130,7 +153,13 @@ fun CercanasScreen(
                 )
             }
             else -> items(state.bikeItems, key = { it.station.id }) { item ->
-                BikeStationRow(item = item, modifier = Modifier.padding(horizontal = 16.dp))
+                BikeStationRow(
+                    item = item,
+                    isFavorite = state.bikeFavorites.contains(item.station.id),
+                    onToggleFavorite = { viewModel.toggleBikeFavorite(item.station.id) },
+                    onDirections = { MapsIntent.directionsTo(ctx, item.station.lat, item.station.lng, item.station.name) },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
         }
 

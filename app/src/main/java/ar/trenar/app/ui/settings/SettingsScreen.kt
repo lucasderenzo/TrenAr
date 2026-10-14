@@ -13,9 +13,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -37,6 +39,7 @@ fun SettingsScreen() {
     val prefs = ServiceLocator.prefs
     val scope = rememberCoroutineScope()
     val notify by prefs.notifyEnabled.collectAsStateWithLifecycle(initialValue = true)
+    val perLine by prefs.nearbyPerLine.collectAsStateWithLifecycle(initialValue = 1)
 
     Column(
         Modifier
@@ -80,6 +83,43 @@ fun SettingsScreen() {
                         checked = notify,
                         onCheckedChange = { scope.launch { prefs.setNotifyEnabled(it) } },
                     )
+                }
+            }
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Filled.NearMe,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.size(10.dp))
+                        Text(
+                            "Cercanas",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Text(
+                        "Alternativas por línea: cuántas estaciones cercanas mostrar de cada línea.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(1, 2, 3).forEach { n ->
+                            FilterChip(
+                                selected = perLine == n,
+                                onClick = { scope.launch { prefs.setNearbyPerLine(n) } },
+                                label = { Text("$n") },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -144,7 +184,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.8.0 · horarios exactos de Urquiza y Belgrano Norte (PDF oficial)",
+                        "TrenAr v1.9.0 · Cómo llego, favoritos de Ecobici y cercanía configurable",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

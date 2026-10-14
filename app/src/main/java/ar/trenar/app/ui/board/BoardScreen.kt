@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OpenInNew
@@ -73,6 +74,7 @@ import ar.trenar.app.ui.theme.MajorRed
 import ar.trenar.app.ui.theme.MinorAmber
 import ar.trenar.app.ui.theme.OnTimeGreen
 import ar.trenar.app.util.Geo
+import ar.trenar.app.util.MapsIntent
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +85,7 @@ fun BoardScreen(
     viewModel: BoardViewModel = viewModel(factory = BoardViewModel.factory(stationId)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val ctx = LocalContext.current
     var nowSec by remember { mutableLongStateOf(System.currentTimeMillis() / 1000) }
 
     // 1-second local tick for smooth countdowns
@@ -120,6 +123,15 @@ fun BoardScreen(
                     }
                 },
                 actions = {
+                    state.board?.station?.let { st ->
+                        IconButton(onClick = { MapsIntent.directionsTo(ctx, st.lat, st.lng, st.name) }) {
+                            Icon(
+                                Icons.Filled.Directions,
+                                contentDescription = "Cómo llego",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                     if (state.board?.realtime != false) {
                         IconButton(onClick = { viewModel.toggleFollow() }) {
                             Icon(

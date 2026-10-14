@@ -18,16 +18,28 @@ class PrefsStore(context: Context) {
     private val ds = context.applicationContext.dataStore
 
     private val favoritesKey = stringSetPreferencesKey("favorites")
+    private val bikeFavoritesKey = stringSetPreferencesKey("bike_favorites")
     private val pinnedKey = intPreferencesKey("pinned_station")
     private val notifyKey = booleanPreferencesKey("notify_enabled")
+    private val radiusKey = intPreferencesKey("nearby_radius_m")
+    private val perLineKey = intPreferencesKey("nearby_per_line")
 
     val favorites: Flow<List<Int>> = ds.data.map { p ->
         (p[favoritesKey] ?: emptySet()).mapNotNull { it.toIntOrNull() }.sorted()
     }
 
+    /** Favorite Ecobici stations (GBFS station ids, which are strings). */
+    val bikeFavorites: Flow<Set<String>> = ds.data.map { it[bikeFavoritesKey] ?: emptySet() }
+
     val pinnedStation: Flow<Int?> = ds.data.map { it[pinnedKey] }
 
     val notifyEnabled: Flow<Boolean> = ds.data.map { it[notifyKey] ?: true }
+
+    /** Search radius for Cercanas, in meters. Default 1500. */
+    val nearbyRadiusMeters: Flow<Int> = ds.data.map { it[radiusKey] ?: 1500 }
+
+    /** How many nearby stations to show per line (1-3). Default 1. */
+    val nearbyPerLine: Flow<Int> = ds.data.map { (it[perLineKey] ?: 1).coerceIn(1, 3) }
 
     suspend fun toggleFavorite(id: Int) {
         ds.edit { p ->
@@ -36,6 +48,22 @@ class PrefsStore(context: Context) {
             if (!current.add(key)) current.remove(key)
             p[favoritesKey] = current
         }
+    }
+
+    suspend fun toggleBikeFavorite(id: String) {
+        ds.edit { p ->
+            val current = (p[bikeFavoritesKey] ?: emptySet()).toMutableSet()
+            if (!current.add(id)) current.remove(id)
+            p[bikeFavoritesKey] = current
+        }
+    }
+
+    suspend fun setNearbyRadius(meters: Int) {
+        ds.edit { it[radiusKey] = meters }
+    }
+
+    suspend fun setNearbyPerLine(count: Int) {
+        ds.edit { it[perLineKey] = count.coerceIn(1, 3) }
     }
 
     suspend fun setPinned(id: Int) {
@@ -47,6 +75,9 @@ class PrefsStore(context: Context) {
     }
 
     suspend fun favoritesNow(): List<Int> = favorites.first()
+    suspend fun bikeFavoritesNow(): Set<String> = bikeFavorites.first()
     suspend fun pinnedNow(): Int? = pinnedStation.first()
     suspend fun notifyEnabledNow(): Boolean = notifyEnabled.first()
+    suspend fun nearbyRadiusNow(): Int = nearbyRadiusMeters.first()
+    suspend fun nearbyPerLineNow(): Int = nearbyPerLine.first()
 }

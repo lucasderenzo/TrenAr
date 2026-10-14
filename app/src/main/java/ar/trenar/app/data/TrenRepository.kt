@@ -31,23 +31,53 @@ class TrenRepository(
     /** Live Ecobici dock stations (public GBFS feed). */
     suspend fun ecobiciStations(): List<ar.trenar.app.data.model.BikeStation> = ecobici.stations()
 
-    /** Nearest Ecobici stations to a point, with distance + walking time. */
+    /**
+     * Nearest Ecobici stations within [radiusMeters], with distance + walking time. When none of the
+     * nearby ones have bikes (or docks) available, also surfaces the closest station that does.
+     */
     suspend fun nearestBikes(
         lat: Double,
         lng: Double,
-        limit: Int = 10,
+        radiusMeters: Int = 1500,
+        limit: Int = 12,
     ): List<ar.trenar.app.data.model.BikeNearby> {
-        return ecobici.stations()
+        val all = ecobici.stations()
             .map { it to Geo.haversine(lat, lng, it.lat, it.lng) }
             .sortedBy { it.second }
-            .take(limit)
-            .map { (st, dist) ->
-                ar.trenar.app.data.model.BikeNearby(
-                    station = st,
-                    distanceMeters = dist,
-                    walkSeconds = (dist / 1.35).toInt(),
-                )
+        fun near(st: ar.trenar.app.data.model.BikeStation, d: Double, note: String? = null) =
+            ar.trenar.app.data.model.BikeNearby(st, d, (d / 1.35).toInt(), note)
+
+        val inRadius = all.filter { it.second <= radiusMeters }
+        val base = (inRadius.ifEmpty { all.take(1) }).take(limit)
+        val result = base.map { (st, d) -> near(st, d) }.toMutableList()
+
+        if (result.none { it.station.bikes > 0 }) {
+            all.firstOrNull { it.first.bikes > 0 }?.let { (st, d) ->
+                if (result.none { r -> r.station.id == st.id }) result.add(near(st, d, "Más cercana con bicis"))
             }
+        }
+        if (result.none { it.station.docks > 0 }) {
+            all.firstOrNull { it.first.docks > 0 }?.let { (st, d) ->
+                if (result.none { r -> r.station.id == st.id }) result.add(near(st, d, "Más cercana con anclajes"))
+            }
+        }
+        return result
+    }
+
+    /** Favorite Ecobici stations (by id), with live availability; distance only if a location is given. */
+    suspend fun favoriteBikes(
+        ids: Set<String>,
+        lat: Double? = null,
+        lng: Double? = null,
+    ): List<ar.trenar.app.data.model.BikeNearby> {
+        if (ids.isEmpty()) return emptyList()
+        return ecobici.stations()
+            .filter { it.id in ids }
+            .map { st ->
+                val d = if (lat != null && lng != null) Geo.haversine(lat, lng, st.lat, st.lng) else null
+                ar.trenar.app.data.model.BikeNearby(st, d, d?.let { (it / 1.35).toInt() })
+            }
+            .sortedBy { it.distanceMeters ?: Double.MAX_VALUE }
     }
 
     suspend fun searchStationsOnline(query: String): List<StationRef> = withContext(Dispatchers.IO) {
@@ -59,6 +89,14 @@ class TrenRepository(
 
     suspend fun nearestStations(lat: Double, lng: Double, limit: Int = 8): List<StationRef> =
         catalog.nearest(lat, lng, limit)
+
+    /** Nearest stations within a radius, at most [perLine] per line. */
+    suspend fun nearestStationsByLine(
+        lat: Double,
+        lng: Double,
+        radiusMeters: Int = 1500,
+        perLine: Int = 1,
+    ): List<StationRef> = catalog.nearestByLine(lat, lng, radiusMeters, perLine)
 
     suspend fun station(id: Int): StationRef? = catalog.byId(id)
 

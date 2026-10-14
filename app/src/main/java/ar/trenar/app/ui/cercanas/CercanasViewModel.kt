@@ -20,17 +20,33 @@ data class CercanasUiState(
     val loading: Boolean = false,
     val locationDenied: Boolean = false,
     val locationUnavailable: Boolean = false,
+    val radiusMeters: Int = 1500,
+    val perLine: Int = 1,
+    val bikeFavorites: Set<String> = emptySet(),
 )
 
 class CercanasViewModel : ViewModel() {
 
     private val repo = ServiceLocator.repository
     private val location = ServiceLocator.location
+    private val prefs = ServiceLocator.prefs
 
     private val _state = MutableStateFlow(CercanasUiState())
     val state = _state.asStateFlow()
 
     private var lastLoc: Location? = null
+
+    init {
+        viewModelScope.launch {
+            prefs.nearbyRadiusMeters.collect { r -> _state.update { it.copy(radiusMeters = r) } }
+        }
+        viewModelScope.launch {
+            prefs.nearbyPerLine.collect { n -> _state.update { it.copy(perLine = n) } }
+        }
+        viewModelScope.launch {
+            prefs.bikeFavorites.collect { f -> _state.update { it.copy(bikeFavorites = f) } }
+        }
+    }
 
     fun refresh() = load(_state.value.mode, force = true)
 
@@ -42,6 +58,24 @@ class CercanasViewModel : ViewModel() {
             CercanasMode.ECOBICI -> _state.value.bikeItems.isEmpty()
         }
         if (needs) load(mode, force = false) else _state.update { it.copy(loading = false) }
+    }
+
+    fun setRadius(meters: Int) {
+        if (meters == _state.value.radiusMeters) return
+        viewModelScope.launch { prefs.setNearbyRadius(meters) }
+        _state.update { it.copy(radiusMeters = meters) }
+        load(_state.value.mode, force = true)
+    }
+
+    fun setPerLine(count: Int) {
+        if (count == _state.value.perLine) return
+        viewModelScope.launch { prefs.setNearbyPerLine(count) }
+        _state.update { it.copy(perLine = count) }
+        if (_state.value.mode == CercanasMode.TREN) load(CercanasMode.TREN, force = true)
+    }
+
+    fun toggleBikeFavorite(id: String) {
+        viewModelScope.launch { prefs.toggleBikeFavorite(id) }
     }
 
     private fun load(mode: CercanasMode, force: Boolean) {
@@ -57,9 +91,10 @@ class CercanasViewModel : ViewModel() {
                     _state.update { it.copy(loading = false, locationUnavailable = true) }
                     return@launch
                 }
+                val radius = _state.value.radiusMeters
                 when (mode) {
                     CercanasMode.TREN -> {
-                        val near = repo.nearestStations(loc.latitude, loc.longitude, 8)
+                        val near = repo.nearestStationsByLine(loc.latitude, loc.longitude, radius, _state.value.perLine)
                         _state.update {
                             it.copy(items = near.map { s -> StationWithNext(s, null, loading = true) }, loading = false)
                         }
@@ -69,7 +104,7 @@ class CercanasViewModel : ViewModel() {
                         }
                     }
                     CercanasMode.ECOBICI -> {
-                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, 12)
+                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius)
                         _state.update { it.copy(bikeItems = bikes, loading = false) }
                     }
                 }
