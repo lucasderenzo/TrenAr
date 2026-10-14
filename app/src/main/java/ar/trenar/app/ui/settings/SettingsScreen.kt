@@ -184,7 +184,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.9.0 · Cómo llego, favoritos de Ecobici y cercanía configurable",
+                        "TrenAr v1.10.0 · mapa con la posición del tren en cada estación",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

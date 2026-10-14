@@ -53,6 +53,7 @@ import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -68,6 +69,7 @@ import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.Format
 import ar.trenar.app.ui.common.FreshnessPill
 import ar.trenar.app.ui.common.LineChip
+import ar.trenar.app.ui.common.MiniTrain
 import ar.trenar.app.ui.common.StationMiniMap
 import ar.trenar.app.ui.theme.LineColors
 import ar.trenar.app.ui.theme.MajorRed
@@ -197,18 +199,14 @@ private fun BoardContent(
         return
     }
 
-    val radarTrains = remember(board.arrivals) {
+    val miniTrains = remember(board.arrivals) {
         if (station == null) emptyList()
         else board.arrivals.mapNotNull { a ->
             val lat = a.trainLat
             val lng = a.trainLng
             if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) null
-            else RadarTrain(
-                bearingDeg = Geo.bearing(station.lat, station.lng, lat, lng),
-                distanceMeters = Geo.haversine(station.lat, station.lng, lat, lng),
-                color = LineColors.colorFor(a.line),
-            )
-        }
+            else MiniTrain(lat, lng, LineColors.colorFor(a.line).toArgb(), "Tren a ${a.destination}")
+        }.distinctBy { it.lat to it.lng }
     }
 
     LazyColumn(
@@ -223,19 +221,39 @@ private fun BoardContent(
             item { SaliYaCard(walkSeconds = walk, arrival = soonest, nowSec = nowSec) }
         }
 
-        item {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(
-                        "Trenes en vivo",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
-                    )
-                    ProximityRadar(trains = radarTrains)
+        if (station != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(
+                            "Trenes en vivo",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                        )
+                        Box(
+                            Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(14.dp)),
+                        ) {
+                            StationMiniMap(
+                                lat = station.lat,
+                                lng = station.lng,
+                                label = station.name,
+                                modifier = Modifier.fillMaxSize(),
+                                trains = miniTrains,
+                            )
+                        }
+                        if (miniTrains.isEmpty()) {
+                            Text(
+                                "Sin trenes con posición en vivo ahora",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
