@@ -35,7 +35,10 @@ class PrefsStore(context: Context) {
     val notifyEnabled: Flow<Boolean> = ds.data.map { it[notifyKey] ?: true }
 
     /** Search radius for Cercanas, in meters. Default 1000. Int.MAX_VALUE = no radius. */
-    val nearbyRadiusMeters: Flow<Int> = ds.data.map { it[radiusKey] ?: 1000 }
+    val nearbyRadiusMeters: Flow<Int> = ds.data.map { p ->
+        // keep only the supported options; map any older/stale value to the default
+        p[radiusKey]?.takeIf { it == 1000 || it == 3000 || it == Int.MAX_VALUE } ?: 1000
+    }
 
     suspend fun toggleFavorite(id: Int) {
         ds.edit { p ->
