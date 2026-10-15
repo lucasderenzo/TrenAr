@@ -22,6 +22,7 @@ data class BoardUiState(
     val isFavorite: Boolean = false,
     val isTracking: Boolean = false,
     val walkSeconds: Int? = null,
+    val distanceMeters: Double? = null,
     val filterDestination: String? = null,
 ) {
     val destinations: List<String>
@@ -65,7 +66,7 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
             val station = repo.station(stationId) ?: return@launch
             val meters = Geo.haversine(loc.latitude, loc.longitude, station.lat, station.lng)
             // ~1.35 m/s walking pace
-            _state.update { it.copy(walkSeconds = (meters / 1.35).toInt()) }
+            _state.update { it.copy(walkSeconds = (meters / 1.35).toInt(), distanceMeters = meters) }
         }
     }
 

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
@@ -195,7 +196,12 @@ private fun BoardContent(
     val arrivals = state.filteredArrivals
 
     if (!board.realtime) {
-        ScheduleNoticeContent(board = board, nowSec = nowSec, walkSeconds = state.walkSeconds)
+        ScheduleNoticeContent(
+            board = board,
+            nowSec = nowSec,
+            walkSeconds = state.walkSeconds,
+            distanceMeters = state.distanceMeters,
+        )
         return
     }
 
@@ -215,11 +221,18 @@ private fun BoardContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        state.distanceMeters?.let { d ->
+            item { StationDistanceRow(distanceMeters = d, walkSeconds = state.walkSeconds) }
+        }
+
         val walk = state.walkSeconds
-        val soonest = board.arrivals.firstOrNull { !it.cancelled }
-        val soonestEta = soonest?.etaSecondsAt(nowSec)
-        if (walk != null && soonest != null && soonestEta != null) {
-            item { SaliYaCard(walkSeconds = walk, etaSeconds = soonestEta, destination = soonest.destination) }
+        val saliTrains = board.arrivals
+            .filter { !it.cancelled }
+            .mapNotNull { a -> a.etaSecondsAt(nowSec)?.let { eta -> eta to a.destination } }
+            .filter { it.first >= 0 }
+            .sortedBy { it.first }
+        if (walk != null && saliTrains.isNotEmpty()) {
+            item { SaliYaCard(walkSeconds = walk, trains = saliTrains) }
         }
 
         if (station != null) {
@@ -301,10 +314,14 @@ private fun BoardContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ScheduleNoticeContent(board: BoardState, nowSec: Long, walkSeconds: Int?) {
+private fun ScheduleNoticeContent(
+    board: BoardState,
+    nowSec: Long,
+    walkSeconds: Int?,
+    distanceMeters: Double?,
+) {
     val ctx = LocalContext.current
     val station = board.station
-    val nextDep = board.scheduled.firstOrNull()
     val operator = board.operator
     val scheduleUrl = board.scheduleUrl
     val openSchedule = {
@@ -323,10 +340,16 @@ private fun ScheduleNoticeContent(board: BoardState, nowSec: Long, walkSeconds: 
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (walkSeconds != null && nextDep != null) {
-            val eta = (nextDep.departureEpochSec - nowSec).toInt()
-            if (eta >= 0) {
-                item { SaliYaCard(walkSeconds = walkSeconds, etaSeconds = eta, destination = nextDep.destination) }
+        distanceMeters?.let { d ->
+            item { StationDistanceRow(distanceMeters = d, walkSeconds = walkSeconds) }
+        }
+        run {
+            val saliTrains = board.scheduled
+                .map { (it.departureEpochSec - nowSec).toInt() to it.destination }
+                .filter { it.first >= 0 }
+                .sortedBy { it.first }
+            if (walkSeconds != null && saliTrains.isNotEmpty()) {
+                item { SaliYaCard(walkSeconds = walkSeconds, trains = saliTrains) }
             }
         }
         if (station != null) {
@@ -493,21 +516,58 @@ private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
 }
 
 @Composable
-private fun SaliYaCard(walkSeconds: Int, etaSeconds: Int, destination: String) {
-    val eta = etaSeconds
-    val leave = eta - walkSeconds
-    val goNow = leave <= 0
-    val urgent = leave in 1..119
-    val accent = when {
-        goNow -> MajorRed
-        urgent -> MinorAmber
-        else -> OnTimeGreen
+private fun StationDistanceRow(distanceMeters: Double, walkSeconds: Int?) {
+    Row(
+        Modifier.padding(start = 4.dp, top = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Filled.Place,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            "a ${Geo.formatDistance(distanceMeters)}" +
+                (walkSeconds?.let { " · ~${(it / 60).coerceAtLeast(1)} min caminando" } ?: ""),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
-    val title = when {
-        goNow -> "¡Salí ya!"
-        leave < 60 -> "Salí en menos de 1 min"
-        else -> "Salí en ${leave / 60} min"
+}
+
+/**
+ * "Salí ya": picks the soonest train you can actually reach on foot (arrival >= walking time).
+ * If you can't make any of the upcoming trains, says so and shows the next one.
+ */
+@Composable
+private fun SaliYaCard(walkSeconds: Int, trains: List<Pair<Int, String>>) {
+    if (trains.isEmpty()) return
+    val walkMin = (walkSeconds / 60).coerceAtLeast(1)
+    // allow ~1 min of slack to still "just catch" a train
+    val catchable = trains.firstOrNull { it.first >= walkSeconds - 60 }
+
+    val accent: androidx.compose.ui.graphics.Color
+    val title: String
+    val subtitle: String
+    if (catchable == null) {
+        val soonest = trains.first()
+        accent = MajorRed
+        title = "No llegás caminando"
+        subtitle = "Estás a ~$walkMin min · el próximo a ${soonest.second} sale en ${soonest.first / 60} min"
+    } else {
+        val eta = catchable.first
+        val leave = eta - walkSeconds
+        accent = when {
+            leave < 60 -> MajorRed
+            leave < 300 -> MinorAmber
+            else -> OnTimeGreen
+        }
+        title = if (leave < 60) "¡Salí ya!" else "Salí en ${leave / 60} min"
+        subtitle = "~$walkMin min caminando · tren a ${catchable.second} en ${eta / 60} min"
     }
+
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.12f)),
@@ -532,7 +592,7 @@ private fun SaliYaCard(walkSeconds: Int, etaSeconds: Int, destination: String) {
                     color = accent,
                 )
                 Text(
-                    "~${(walkSeconds / 60).coerceAtLeast(1)} min caminando · tren a $destination en ${eta / 60} min",
+                    subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
