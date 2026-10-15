@@ -81,19 +81,28 @@ class CercanasViewModel : ViewModel() {
                     return@launch
                 }
                 val radius = _state.value.radiusMeters
+                val noRadius = radius == Int.MAX_VALUE
                 when (mode) {
                     CercanasMode.TREN -> {
-                        val near = repo.nearestStationsInRadius(loc.latitude, loc.longitude, radius, cap = 20)
+                        // "Sin radio" lists every station; otherwise all within the radius.
+                        val listCap = if (noRadius) 400 else 30
+                        val near = repo.nearestStationsInRadius(loc.latitude, loc.longitude, radius, cap = listCap)
+                        // fetch live arrivals only for the nearest few; the rest are plain rows.
+                        val arrivalsCount = 15
                         _state.update {
-                            it.copy(items = near.map { s -> StationWithNext(s, null, loading = true) }, loading = false)
+                            it.copy(
+                                items = near.mapIndexed { i, s -> StationWithNext(s, null, loading = i < arrivalsCount) },
+                                loading = false,
+                            )
                         }
-                        val enriched = repo.withNextArrivals(near)
+                        val enriched = repo.withNextArrivals(near.take(arrivalsCount))
                         if (_state.value.mode == CercanasMode.TREN) {
-                            _state.update { it.copy(items = enriched) }
+                            val merged = enriched + near.drop(arrivalsCount).map { StationWithNext(it, null) }
+                            _state.update { it.copy(items = merged) }
                         }
                     }
                     CercanasMode.ECOBICI -> {
-                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius, limit = 20)
+                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius, limit = if (noRadius) 400 else 20)
                         _state.update { it.copy(bikeItems = bikes, loading = false) }
                     }
                 }

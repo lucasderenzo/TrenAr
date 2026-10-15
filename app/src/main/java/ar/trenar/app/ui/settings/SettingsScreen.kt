@@ -144,7 +144,7 @@ fun SettingsScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.12.0 · distancia y tiempo a la estación, y salí ya al próximo que alcanzás",
+                        "TrenAr v1.12.1 · Sin radio muestra todas las estaciones",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
