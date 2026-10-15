@@ -6,11 +6,147 @@
     <string name="widget_description">Próximos trenes de tu estación favorita.</string>
     <string name="widget_empty">Marcá una estación favorita para verla acá</string>
 
-    <!-- Notifications -->
+    <!-- Notifications channels -->
     <string name="channel_delays_name">Demoras y alertas</string>
     <string name="channel_delays_desc">Avisos de demoras, cancelaciones y estado del servicio.</string>
     <string name="channel_leave_name">Salí ahora</string>
     <string name="channel_leave_desc">Recordatorios para salir a tiempo hacia tu estación.</string>
     <string name="channel_track_name">Seguimiento de tren</string>
     <string name="channel_track_desc">Cuenta regresiva del próximo tren mientras seguís una estación.</string>
+
+    <!-- Tabs -->
+    <string name="nav_cercanas">Cercanas</string>
+    <string name="nav_favoritos">Favoritos</string>
+    <string name="nav_mapa">Mapa</string>
+    <string name="nav_alertas">Alertas</string>
+    <string name="nav_ajustes">Ajustes</string>
+
+    <!-- Common -->
+    <string name="tren">Tren</string>
+    <string name="ecobici">Ecobici</string>
+    <string name="volver">Volver</string>
+    <string name="actualizar">Actualizar</string>
+    <string name="limpiar">Limpiar</string>
+    <string name="buscar_estacion">Buscar estación</string>
+    <string name="en_hora">En hora</string>
+    <string name="llegando">Llegando</string>
+    <string name="cancelado">Cancelado</string>
+    <string name="sin_datos">s/d</string>
+    <string name="min">min</string>
+    <string name="seg">seg</string>
+    <string name="ya">¡Ya!</string>
+    <string name="menos_1_min">&lt; 1 min</string>
+    <string name="min_value">%1$d min</string>
+    <string name="mas_min">+%1$d min</string>
+    <string name="a_destino">a %1$s</string>
+    <string name="a_distancia">a %1$s</string>
+    <string name="caminando_dist">a %1$s · ~%2$d min caminando</string>
+    <string name="bicis_count">%1$d bicis</string>
+    <string name="bicis_label">bicis</string>
+    <string name="anclajes_count">%1$d anclajes</string>
+    <string name="agregar_favoritos">Agregar a favoritos</string>
+    <string name="quitar_favoritos">Quitar de favoritos</string>
+    <string name="actualizado">actualizado %1$s</string>
+    <string name="recien">recién</string>
+    <string name="hace_min">hace %1$d min</string>
+    <string name="hace_seg">hace %1$ds</string>
+
+    <!-- Cercanas -->
+    <string name="radio">Radio</string>
+    <string name="radio_1km">1 km</string>
+    <string name="radio_3km">3 km</string>
+    <string name="radio_sin">Sin radio</string>
+    <string name="cercanas_sin_estaciones_title">Sin estaciones cerca</string>
+    <string name="cercanas_sin_estaciones_sub">Buscá tu estación por nombre.</string>
+    <string name="cercanas_sin_ecobici_title">Sin Ecobici cerca</string>
+    <string name="cercanas_sin_ecobici_sub">No encontramos estaciones de Ecobici cerca tuyo.</string>
+    <string name="no_pudimos_ubicarte">No pudimos ubicarte</string>
+    <string name="activa_gps">Activá el GPS y probá de nuevo, o buscá tu estación.</string>
+    <string name="encontra_cerca_title">Encontrá lo que tenés cerca</string>
+    <string name="encontra_cerca_sub">Con tu ubicación te mostramos las estaciones de tren y las de Ecobici más próximas.</string>
+    <string name="usar_ubicacion">Usar mi ubicación</string>
+
+    <!-- Favoritos -->
+    <string name="fav_trenes">Trenes</string>
+    <string name="fav_empty_title">Todavía no marcaste favoritas</string>
+    <string name="fav_empty_sub">Tocá la estrella en una estación o en una de Ecobici para tenerla a mano.</string>
+
+    <!-- Search -->
+    <string name="search_hint">Ej: Once, Retiro, Moreno…</string>
+    <string name="search_empty_title">Buscá tu estación</string>
+    <string name="search_empty_sub">Escribí el nombre y elegí de la lista.</string>
+    <string name="search_no_results_title">Sin resultados</string>
+    <string name="search_no_results_sub">Probá con otro nombre.</string>
+
+    <!-- Alertas -->
+    <string name="alertas_servicio">Servicio</string>
+    <string name="alertas_sin_title">Sin alertas</string>
+    <string name="alertas_sin_sub">No hay alertas de servicio en este momento.</string>
+    <string name="error_no_cargar">No se pudo cargar</string>
+
+    <!-- Board -->
+    <string name="estacion">Estación</string>
+    <string name="como_llego">Cómo llego</string>
+    <string name="favorita">Favorita</string>
+    <string name="seguir_tren">Seguir este tren</string>
+    <string name="trenes_en_vivo">Trenes en vivo</string>
+    <string name="sin_trenes_posicion">Sin trenes con posición en vivo ahora</string>
+    <string name="tren_a">Tren a %1$s</string>
+    <string name="todos">Todos</string>
+    <string name="anden">Andén %1$s</string>
+    <string name="sale_hora">sale %1$s</string>
+    <string name="sin_proximos_title">Sin próximos trenes</string>
+    <string name="sin_proximos_sub">Puede que no haya servicio en este horario. Probá más tarde.</string>
+    <string name="error_sin_conexion">Sin conexión a internet.</string>
+    <string name="error_timeout">El servicio tardó demasiado en responder.</string>
+    <string name="error_generico">No pudimos obtener los arribos. Probá de nuevo.</string>
+    <string name="horarios_programados">Horarios programados</string>
+    <string name="horario_oficial">Horario oficial</string>
+    <string name="horario_programado_clock">Horario programado · %1$s</string>
+    <string name="sin_info_vivo">Sin información en tiempo real</string>
+    <string name="sin_info_vivo_sub">La línea %1$s %2$s no publica llegadas en vivo. Consultá el horario oficial.</string>
+    <string name="la_opera">la opera %1$s y</string>
+    <string name="programados_fuente">Horarios programados según la fuente oficial (%1$s). No reflejan demoras en tiempo real.</string>
+    <string name="sali_ya">¡Salí ya!</string>
+    <string name="sali_en">Salí en %1$d min</string>
+    <string name="no_llegas">No llegás caminando</string>
+    <string name="no_llegas_sub">Estás a ~%1$d min · el próximo a %2$s sale en %3$d min</string>
+    <string name="sali_sub">~%1$d min caminando · tren a %2$s en %3$d min</string>
+
+    <!-- Mapa -->
+    <string name="red_en_vivo">Red en vivo</string>
+    <string name="mi_ubicacion">Mi ubicación</string>
+    <string name="acercar">Acercar</string>
+    <string name="alejar">Alejar</string>
+    <string name="estas_aca">Estás acá</string>
+    <string name="pill_en_vivo">%1$s · %2$d en vivo</string>
+    <string name="pill_sin_vivo">%1$s · %2$d estaciones · sin vivo</string>
+    <string name="pill_ecobici">Ecobici · %1$d estaciones</string>
+    <string name="bike_info">%1$s: %2$d bicis · %3$d anclajes</string>
+
+    <!-- Settings -->
+    <string name="avisos_demoras_title">Avisos de demoras</string>
+    <string name="avisos_demoras_sub">Notificaciones cuando hay demoras o cancelaciones en tus estaciones favoritas.</string>
+    <string name="idioma_title">Idioma</string>
+    <string name="idioma_sub">Elegí el idioma de la app.</string>
+    <string name="idioma_auto">Automático</string>
+    <string name="creditos">Créditos</string>
+    <string name="credito_idea">Idea y dirección: Lucas De Renzo</string>
+    <string name="credito_dev">Desarrollo: Claude (Opus) — Anthropic</string>
+    <string name="credito_equipo">Hecho en equipo, humano + IA. 🚆</string>
+    <string name="sobre_datos_title">Sobre los datos</string>
+    <string name="sobre_datos_body">Datos en tiempo real de la API de Trenes Argentinos (SOFSE). Aplicación no oficial, sin fines comerciales. Los horarios pueden variar; verificá siempre en el andén.</string>
+    <string name="version_line">TrenAr v%1$s</string>
+
+    <!-- Notifications / tracking service -->
+    <string name="notif_stop_following">Dejar de seguir</string>
+    <string name="notif_sin_proximos">Sin próximos trenes ahora</string>
+    <string name="notif_servicio_cancelado">Servicio cancelado</string>
+    <string name="notif_llegando">¡Llegando! %1$s</string>
+    <string name="notif_demora_title">Demora en %1$s · %2$s</string>
+    <string name="notif_cancelado_title">Tren cancelado · %1$s</string>
+    <string name="notif_demora_body">%1$s: +%2$d min%3$s.</string>
+    <string name="notif_cancelado_body">%1$s (%2$s) fue cancelado.</string>
+    <string name="notif_tu_estacion">tu estación</string>
+    <string name="notif_anden">· andén %1$s</string>
 </resources>

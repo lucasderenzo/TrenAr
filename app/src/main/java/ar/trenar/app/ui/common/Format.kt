@@ -1,5 +1,7 @@
 package ar.trenar.app.ui.common
 
+import android.content.Context
+import ar.trenar.app.R
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -15,24 +17,24 @@ object Format {
         instant?.atZone(AR_ZONE)?.format(HHMM)
 
     /** Compact ETA label from seconds-to-arrival. */
-    fun eta(seconds: Int?): String = when {
-        seconds == null -> "s/d"
-        seconds <= 30 -> "Llegando"
-        seconds < 60 -> "< 1 min"
-        else -> "${seconds / 60} min"
+    fun eta(ctx: Context, seconds: Int?): String = when {
+        seconds == null -> ctx.getString(R.string.sin_datos)
+        seconds <= 30 -> ctx.getString(R.string.llegando)
+        seconds < 60 -> ctx.getString(R.string.menos_1_min)
+        else -> ctx.getString(R.string.min_value, seconds / 60)
     }
 
     /** Big split for the countdown: value + unit. */
-    fun etaBig(seconds: Int?): Pair<String, String> = when {
+    fun etaBig(ctx: Context, seconds: Int?): Pair<String, String> = when {
         seconds == null -> "–" to ""
-        seconds <= 30 -> "¡Ya!" to ""
-        seconds < 120 -> "${seconds}" to "seg"
-        else -> "${seconds / 60}" to "min"
+        seconds <= 30 -> ctx.getString(R.string.ya) to ""
+        seconds < 120 -> "$seconds" to ctx.getString(R.string.seg)
+        else -> "${seconds / 60}" to ctx.getString(R.string.min)
     }
 
-    fun freshness(secondsAgo: Long): String = when {
-        secondsAgo < 5 -> "recién"
-        secondsAgo < 60 -> "hace ${secondsAgo}s"
-        else -> "hace ${secondsAgo / 60} min"
+    fun freshness(ctx: Context, secondsAgo: Long): String = when {
+        secondsAgo < 5 -> ctx.getString(R.string.recien)
+        secondsAgo < 60 -> ctx.getString(R.string.hace_seg, secondsAgo.toInt())
+        else -> ctx.getString(R.string.hace_min, (secondsAgo / 60).toInt())
     }
 }

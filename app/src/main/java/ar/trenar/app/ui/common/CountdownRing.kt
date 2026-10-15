@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +38,8 @@ fun CountdownRing(
     val progress by animateFloatAsState(target, tween(600), label = "ringProgress")
     val ringColor by animateColorAsState(statusColor(status), tween(400), label = "ringColor")
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val (big, unit) = Format.etaBig(seconds)
+    val ctx = LocalContext.current
+    val (big, unit) = Format.etaBig(ctx, seconds)
 
     Box(modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {

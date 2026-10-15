@@ -1,5 +1,8 @@
 package ar.trenar.app.ui.settings
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,9 +16,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -25,30 +30,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ar.trenar.app.BuildConfig
+import ar.trenar.app.R
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.ui.common.TabHeader
+import ar.trenar.app.util.LocaleHelper
 import kotlinx.coroutines.launch
+
+private fun Context.findActivity(): Activity? {
+    var c: Context? = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
+}
 
 @Composable
 fun SettingsScreen() {
     val prefs = ServiceLocator.prefs
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
     val notify by prefs.notifyEnabled.collectAsStateWithLifecycle(initialValue = true)
+    val currentLang = LocaleHelper.getLang(ctx)
 
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        TabHeader("Ajustes")
+        TabHeader(stringResource(R.string.nav_ajustes))
         Column(
             Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Spacer(Modifier.size(4.dp))
+
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -66,12 +88,12 @@ fun SettingsScreen() {
                     Spacer(Modifier.size(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Avisos de demoras",
+                            stringResource(R.string.avisos_demoras_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            "Notificaciones cuando hay demoras o cancelaciones en tus estaciones favoritas.",
+                            stringResource(R.string.avisos_demoras_sub),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -80,6 +102,54 @@ fun SettingsScreen() {
                         checked = notify,
                         onCheckedChange = { scope.launch { prefs.setNotifyEnabled(it) } },
                     )
+                }
+            }
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Filled.Language,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.size(10.dp))
+                        Text(
+                            stringResource(R.string.idioma_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.idioma_sub),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val options = listOf(
+                            "" to stringResource(R.string.idioma_auto),
+                            "es" to "Español",
+                            "en" to "English",
+                            "pt" to "Português",
+                        )
+                        options.forEach { (tag, label) ->
+                            FilterChip(
+                                selected = currentLang == tag,
+                                onClick = {
+                                    if (currentLang != tag) {
+                                        LocaleHelper.setLang(ctx, tag)
+                                        ctx.findActivity()?.recreate()
+                                    }
+                                },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -98,25 +168,25 @@ fun SettingsScreen() {
                         )
                         Spacer(Modifier.size(10.dp))
                         Text(
-                            "Créditos",
+                            stringResource(R.string.creditos),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                     Text(
-                        "Idea y dirección: Lucas De Renzo",
+                        stringResource(R.string.credito_idea),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        "Desarrollo: Claude (Opus) — Anthropic",
+                        stringResource(R.string.credito_dev),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.size(6.dp))
                     Text(
-                        "Hecho en equipo, humano + IA. 🚆",
+                        stringResource(R.string.credito_equipo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -132,19 +202,17 @@ fun SettingsScreen() {
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "Sobre los datos",
+                        stringResource(R.string.sobre_datos_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        "Datos en tiempo real de la API de Trenes Argentinos (SOFSE). " +
-                            "Aplicación no oficial, sin fines comerciales. Los horarios pueden variar; " +
-                            "verificá siempre en el andén.",
+                        stringResource(R.string.sobre_datos_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "TrenAr v1.12.1 · Sin radio muestra todas las estaciones",
+                        stringResource(R.string.version_line, BuildConfig.VERSION_NAME),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

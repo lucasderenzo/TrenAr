@@ -1,5 +1,6 @@
 package ar.trenar.app
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,8 +12,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import ar.trenar.app.ui.nav.TrenRoot
 import ar.trenar.app.ui.theme.TrenTheme
+import ar.trenar.app.util.LocaleHelper
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

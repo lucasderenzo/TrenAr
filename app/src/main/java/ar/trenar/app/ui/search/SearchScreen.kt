@@ -37,9 +37,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.trenar.app.R
 import ar.trenar.app.ui.common.EmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,10 +62,10 @@ fun SearchScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Buscar estación") },
+                title = { Text(stringResource(R.string.buscar_estacion)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -77,12 +79,12 @@ fun SearchScreen(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
                 modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                placeholder = { Text("Ej: Once, Retiro, Moreno…") },
+                placeholder = { Text(stringResource(R.string.search_hint)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onQueryChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Limpiar")
+                            Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.limpiar))
                         }
                     }
                 },
@@ -95,14 +97,14 @@ fun SearchScreen(
             when {
                 query.isBlank() -> EmptyState(
                     icon = Icons.Filled.Search,
-                    title = "Buscá tu estación",
-                    subtitle = "Escribí el nombre y elegí de la lista.",
+                    title = stringResource(R.string.search_empty_title),
+                    subtitle = stringResource(R.string.search_empty_sub),
                     modifier = Modifier.padding(top = 40.dp),
                 )
                 results.isEmpty() -> EmptyState(
                     icon = Icons.Outlined.Train,
-                    title = "Sin resultados",
-                    subtitle = "Probá con otro nombre.",
+                    title = stringResource(R.string.search_no_results_title),
+                    subtitle = stringResource(R.string.search_no_results_sub),
                     modifier = Modifier.padding(top = 40.dp),
                 )
                 else -> LazyColumn(

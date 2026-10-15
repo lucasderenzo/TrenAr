@@ -30,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import ar.trenar.app.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,9 +51,9 @@ fun AlertasScreen(viewModel: AlertasViewModel = viewModel()) {
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TabHeader("Alertas", modifier = Modifier.weight(1f))
+                TabHeader(stringResource(R.string.nav_alertas), modifier = Modifier.weight(1f))
                 IconButton(onClick = { viewModel.load() }, modifier = Modifier.padding(end = 8.dp)) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Actualizar")
+                    Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.actualizar))
                 }
             }
         }
@@ -65,15 +67,15 @@ fun AlertasScreen(viewModel: AlertasViewModel = viewModel()) {
             state.error != null -> item {
                 EmptyState(
                     icon = Icons.Filled.Refresh,
-                    title = "No se pudo cargar",
+                    title = stringResource(R.string.error_no_cargar),
                     subtitle = state.error ?: "",
                 )
             }
             state.alerts.isEmpty() -> item {
                 EmptyState(
                     icon = Icons.Outlined.CheckCircle,
-                    title = "Sin alertas",
-                    subtitle = "No hay alertas de servicio en este momento.",
+                    title = stringResource(R.string.alertas_sin_title),
+                    subtitle = stringResource(R.string.alertas_sin_sub),
                 )
             }
             else -> items(state.alerts) { alert ->
@@ -102,7 +104,7 @@ private fun AlertCard(alert: ServiceAlert, modifier: Modifier = Modifier) {
             )
             Column(Modifier.padding(14.dp)) {
                 Text(
-                    alert.line.ifBlank { "Servicio" },
+                    alert.line.ifBlank { stringResource(R.string.alertas_servicio) },
                     style = MaterialTheme.typography.labelLarge,
                     color = color,
                     fontWeight = FontWeight.Bold,

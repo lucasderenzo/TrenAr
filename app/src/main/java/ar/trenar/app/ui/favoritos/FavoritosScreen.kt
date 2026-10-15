@@ -20,10 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.trenar.app.R
 import ar.trenar.app.ui.common.BikeStationRow
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.StationArrivalRow
@@ -53,20 +55,20 @@ fun FavoritosScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { TabHeader("Favoritos") }
+        item { TabHeader(stringResource(R.string.nav_favoritos)) }
 
         if (!hasTrains && !hasBikes) {
             item {
                 EmptyState(
                     icon = Icons.Outlined.StarOutline,
-                    title = "Todavía no marcaste favoritas",
-                    subtitle = "Tocá la estrella en una estación o en una estación de Ecobici para tenerla a mano.",
+                    title = stringResource(R.string.fav_empty_title),
+                    subtitle = stringResource(R.string.fav_empty_sub),
                 )
             }
         }
 
         if (hasTrains) {
-            if (showSectionLabels) item { SectionLabel("Trenes") }
+            if (showSectionLabels) item { SectionLabel(stringResource(R.string.fav_trenes)) }
             items(state.items, key = { "tren_${it.station.id}" }) { item ->
                 StationArrivalRow(
                     item = item,
@@ -78,7 +80,7 @@ fun FavoritosScreen(
         }
 
         if (hasBikes) {
-            if (showSectionLabels) item { SectionLabel("Ecobici") }
+            if (showSectionLabels) item { SectionLabel(stringResource(R.string.ecobici)) }
             items(state.bikeItems, key = { "bike_${it.station.id}" }) { item ->
                 BikeStationRow(
                     item = item,

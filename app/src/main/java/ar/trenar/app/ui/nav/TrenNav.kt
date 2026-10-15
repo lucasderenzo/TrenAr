@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import ar.trenar.app.R
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -47,14 +49,14 @@ object Dest {
     fun board(stationId: Int) = "board/$stationId"
 }
 
-private data class TabItem(val route: String, val label: String, val icon: ImageVector)
+private data class TabItem(val route: String, val labelRes: Int, val icon: ImageVector)
 
 private val tabs = listOf(
-    TabItem(Dest.CERCANAS, "Cercanas", Icons.Filled.NearMe),
-    TabItem(Dest.FAVORITOS, "Favoritos", Icons.Filled.Star),
-    TabItem(Dest.MAPA, "Mapa", Icons.Filled.Map),
-    TabItem(Dest.ALERTAS, "Alertas", Icons.Filled.NotificationsActive),
-    TabItem(Dest.AJUSTES, "Ajustes", Icons.Filled.Settings),
+    TabItem(Dest.CERCANAS, R.string.nav_cercanas, Icons.Filled.NearMe),
+    TabItem(Dest.FAVORITOS, R.string.nav_favoritos, Icons.Filled.Star),
+    TabItem(Dest.MAPA, R.string.nav_mapa, Icons.Filled.Map),
+    TabItem(Dest.ALERTAS, R.string.nav_alertas, Icons.Filled.NotificationsActive),
+    TabItem(Dest.AJUSTES, R.string.nav_ajustes, Icons.Filled.Settings),
 )
 private val tabRoutes = tabs.map { it.route }.toSet()
 
@@ -85,8 +87,8 @@ fun TrenRoot(startStationId: Int?) {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
+                            icon = { Icon(tab.icon, contentDescription = stringResource(tab.labelRes)) },
+                            label = { Text(stringResource(tab.labelRes)) },
                         )
                     }
                 }

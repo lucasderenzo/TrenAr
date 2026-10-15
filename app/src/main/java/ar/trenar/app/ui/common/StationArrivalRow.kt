@@ -21,9 +21,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ar.trenar.app.R
 import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.ui.theme.OnTimeGreen
 import ar.trenar.app.util.Geo
@@ -60,11 +63,12 @@ fun StationArrivalRow(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                 )
+                val ctx = LocalContext.current
                 val subtitle = buildString {
                     if (st.line.isNotBlank()) append(st.line)
                     st.distanceMeters?.let {
                         if (isNotEmpty()) append(" · ")
-                        append("a ${Geo.formatDistance(it)}")
+                        append(ctx.getString(R.string.a_distancia, Geo.formatDistance(it)))
                     }
                 }
                 if (subtitle.isNotEmpty()) {
@@ -107,7 +111,7 @@ private fun NextArrivalCell(item: StationWithNext, nowSec: Long) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (live) LiveDot()
                         Text(
-                            "llegando",
+                            stringResource(R.string.llegando),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = OnTimeGreen,
@@ -127,7 +131,7 @@ private fun NextArrivalCell(item: StationWithNext, nowSec: Long) {
                         )
                         Spacer(Modifier.width(3.dp))
                         Text(
-                            "min",
+                            stringResource(R.string.min),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 4.dp),
@@ -135,7 +139,7 @@ private fun NextArrivalCell(item: StationWithNext, nowSec: Long) {
                     }
                 }
                 Text(
-                    "a ${next.destination}",
+                    stringResource(R.string.a_destino, next.destination),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

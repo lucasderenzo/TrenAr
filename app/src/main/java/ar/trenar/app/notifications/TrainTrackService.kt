@@ -40,7 +40,7 @@ class TrainTrackService : Service() {
             return START_NOT_STICKY
         }
         val stationId = intent?.getIntExtra(EXTRA_STATION_ID, -1) ?: -1
-        val stationName = intent?.getStringExtra(EXTRA_STATION_NAME) ?: "Estación"
+        val stationName = intent?.getStringExtra(EXTRA_STATION_NAME) ?: getString(ar.trenar.app.R.string.estacion)
         if (stationId <= 0) {
             stopEverything()
             return START_NOT_STICKY
@@ -87,7 +87,7 @@ class TrainTrackService : Service() {
             b.setChronometerCountDown(true)
         } else {
             b.setShowWhen(false)
-            b.setContentText(if (next == null) "Sin próximos trenes ahora" else "Servicio cancelado")
+            b.setContentText(if (next == null) getString(ar.trenar.app.R.string.notif_sin_proximos) else getString(ar.trenar.app.R.string.notif_servicio_cancelado))
         }
         return b.build()
     }
@@ -95,7 +95,7 @@ class TrainTrackService : Service() {
     private fun buildArriving(stationName: String, next: Arrival): Notification =
         baseBuilder(stationName)
             .setShowWhen(false)
-            .setContentText("¡Llegando! ${detail(next)}")
+            .setContentText(getString(ar.trenar.app.R.string.notif_llegando, detail(next)))
             .build()
 
     private fun baseBuilder(stationName: String): NotificationCompat.Builder {
@@ -118,13 +118,13 @@ class TrainTrackService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(openPi)
-            .addAction(0, "Dejar de seguir", stopPi)
+            .addAction(0, getString(ar.trenar.app.R.string.notif_stop_following), stopPi)
     }
 
     private fun detail(next: Arrival): String = buildString {
-        append("a ${next.destination}")
-        next.platform?.let { append(" · andén $it") }
-        next.delayMinutes()?.let { append(" · +$it min") }
+        append(getString(ar.trenar.app.R.string.a_destino, next.destination))
+        next.platform?.let { append(" " + getString(ar.trenar.app.R.string.notif_anden, it)) }
+        next.delayMinutes()?.let { append(" · " + getString(ar.trenar.app.R.string.mas_min, it)) }
     }
 
     private fun post(notification: Notification) {

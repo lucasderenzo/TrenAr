@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -124,7 +125,7 @@ fun MapaScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        TabHeader("Red en vivo")
+        TabHeader(stringResource(R.string.red_en_vivo))
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,7 +142,7 @@ fun MapaScreen(
                 FilterChip(
                     selected = state.isBikes,
                     onClick = { viewModel.select(MapaViewModel.ECOBICI) },
-                    label = { Text("Ecobici") },
+                    label = { Text(stringResource(R.string.ecobici)) },
                     leadingIcon = {
                         Icon(Icons.Filled.DirectionsBike, contentDescription = null, modifier = Modifier.size(20.dp))
                     },
@@ -169,7 +170,7 @@ fun MapaScreen(
                                 position = GeoPoint(b.lat, b.lng)
                                 icon = bikeIcon
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                title = "${b.name}: ${b.bikes} bicis · ${b.docks} anclajes"
+                                title = ctx.getString(R.string.bike_info, b.name, b.bikes, b.docks)
                                 setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
                             }.also { mv.overlays.add(it) }
                         }
@@ -193,7 +194,7 @@ fun MapaScreen(
                                 position = GeoPoint(lat, lng)
                                 icon = trainIcon
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                title = "Tren a ${t.destination}"
+                                title = ctx.getString(R.string.tren_a, t.destination)
                                 setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
                             }.also { mv.overlays.add(it) }
                         }
@@ -207,7 +208,7 @@ fun MapaScreen(
                             position = gp
                             icon = personIcon
                             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                            title = "Estás acá"
+                            title = ctx.getString(R.string.estas_aca)
                             setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
                         }.also { mv.overlays.add(it) }
                     }
@@ -253,10 +254,9 @@ fun MapaScreen(
                     Spacer(Modifier.width(7.dp))
                     Text(
                         text = when {
-                            state.isBikes -> "Ecobici · ${state.bikes.size} estaciones"
-                            !LineInfo.hasRealtime(state.selected) ->
-                                "${state.selected} · ${state.stations.size} estaciones · sin vivo"
-                            else -> "${state.selected} · ${state.trains.size} en vivo"
+                            state.isBikes -> stringResource(R.string.pill_ecobici, state.bikes.size)
+                            !LineInfo.hasRealtime(state.selected) -> stringResource(R.string.pill_sin_vivo, state.selected, state.stations.size)
+                            else -> stringResource(R.string.pill_en_vivo, state.selected, state.trains.size)
                         },
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -270,9 +270,9 @@ fun MapaScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ZoomButton(Icons.Filled.MyLocation, "Mi ubicación") { locate() }
-                ZoomButton(Icons.Filled.Add, "Acercar") { mapView.controller.zoomIn() }
-                ZoomButton(Icons.Filled.Remove, "Alejar") { mapView.controller.zoomOut() }
+                ZoomButton(Icons.Filled.MyLocation, stringResource(R.string.mi_ubicacion)) { locate() }
+                ZoomButton(Icons.Filled.Add, stringResource(R.string.acercar)) { mapView.controller.zoomIn() }
+                ZoomButton(Icons.Filled.Remove, stringResource(R.string.alejar)) { mapView.controller.zoomOut() }
             }
         }
     }

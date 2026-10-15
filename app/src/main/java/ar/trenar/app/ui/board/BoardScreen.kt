@@ -56,11 +56,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.trenar.app.R
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
 import ar.trenar.app.data.model.ScheduledDeparture
@@ -106,7 +108,7 @@ fun BoardScreen(
         }
     }
 
-    val stationName = state.board?.station?.name ?: "Estación"
+    val stationName = state.board?.station?.name ?: stringResource(R.string.estacion)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -122,7 +124,7 @@ fun BoardScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
                     }
                 },
                 actions = {
@@ -130,7 +132,7 @@ fun BoardScreen(
                         IconButton(onClick = { MapsIntent.directionsTo(ctx, st.lat, st.lng, st.name) }) {
                             Icon(
                                 Icons.Filled.Directions,
-                                contentDescription = "Cómo llego",
+                                contentDescription = stringResource(R.string.como_llego),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -140,7 +142,7 @@ fun BoardScreen(
                             Icon(
                                 if (state.isTracking) Icons.Filled.NotificationsActive
                                 else Icons.Outlined.NotificationsNone,
-                                contentDescription = "Seguir este tren",
+                                contentDescription = stringResource(R.string.seguir_tren),
                                 tint = if (state.isTracking) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -149,13 +151,13 @@ fun BoardScreen(
                     IconButton(onClick = { viewModel.toggleFavorite() }) {
                         Icon(
                             if (state.isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                            contentDescription = "Favorita",
+                            contentDescription = stringResource(R.string.favorita),
                             tint = if (state.isFavorite) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     IconButton(onClick = { viewModel.load(initial = false) }) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Actualizar")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.actualizar))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -171,8 +173,8 @@ fun BoardScreen(
                 }
                 state.error != null && state.board == null -> EmptyState(
                     icon = Icons.Outlined.WifiOff,
-                    title = "No se pudo cargar",
-                    subtitle = state.error ?: "Error",
+                    title = stringResource(R.string.error_no_cargar),
+                    subtitle = state.error ?: "",
                     modifier = Modifier.align(Alignment.Center),
                 )
                 else -> BoardContent(
@@ -205,13 +207,14 @@ private fun BoardContent(
         return
     }
 
+    val ctx = LocalContext.current
     val miniTrains = remember(board.arrivals) {
         if (station == null) emptyList()
         else board.arrivals.mapNotNull { a ->
             val lat = a.trainLat
             val lng = a.trainLng
             if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) null
-            else MiniTrain(lat, lng, LineColors.colorFor(a.line).toArgb(), "Tren a ${a.destination}")
+            else MiniTrain(lat, lng, LineColors.colorFor(a.line).toArgb(), ctx.getString(R.string.tren_a, a.destination))
         }.distinctBy { it.lat to it.lng }
     }
 
@@ -244,7 +247,7 @@ private fun BoardContent(
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
-                            "Trenes en vivo",
+                            stringResource(R.string.trenes_en_vivo),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                         )
@@ -261,7 +264,7 @@ private fun BoardContent(
                         }
                         if (miniTrains.isEmpty()) {
                             Text(
-                                "Sin trenes con posición en vivo ahora",
+                                stringResource(R.string.sin_trenes_posicion),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 4.dp, top = 6.dp),
@@ -281,7 +284,7 @@ private fun BoardContent(
                     FilterChip(
                         selected = state.filterDestination == null,
                         onClick = { onFilter(null) },
-                        label = { Text("Todos") },
+                        label = { Text(stringResource(R.string.todos)) },
                     )
                     state.destinations.take(4).forEach { dest ->
                         FilterChip(
@@ -298,8 +301,8 @@ private fun BoardContent(
             item {
                 EmptyState(
                     icon = Icons.Outlined.Train,
-                    title = "Sin próximos trenes",
-                    subtitle = "Puede que no haya servicio en este horario. Probá más tarde.",
+                    title = stringResource(R.string.sin_proximos_title),
+                    subtitle = stringResource(R.string.sin_proximos_sub),
                 )
             }
         } else {
@@ -384,7 +387,7 @@ private fun ScheduleNoticeContent(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Horarios programados",
+                    stringResource(R.string.horarios_programados),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -396,7 +399,7 @@ private fun ScheduleNoticeContent(
                         modifier = Modifier.clickable { openSchedule() },
                     ) {
                         Text(
-                            "Horario oficial",
+                            stringResource(R.string.horario_oficial),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
@@ -424,17 +427,17 @@ private fun ScheduleNoticeContent(
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            "Sin información en tiempo real",
+                            stringResource(R.string.sin_info_vivo),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            buildString {
-                                append("Esta línea")
-                                operator?.let { append(" la opera $it y") }
-                                append(" no publica llegadas en vivo. Consultá el horario oficial.")
-                            },
+                            stringResource(
+                                R.string.sin_info_vivo_sub,
+                                station?.line ?: "",
+                                operator?.let { stringResource(R.string.la_opera, it) } ?: "",
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -447,9 +450,7 @@ private fun ScheduleNoticeContent(
             }
             item {
                 Text(
-                    "Horarios programados según la fuente oficial" +
-                        (operator?.let { " ($it)" } ?: "") +
-                        ". No reflejan demoras en tiempo real.",
+                    stringResource(R.string.programados_fuente, operator ?: ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
@@ -490,7 +491,7 @@ private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
                 )
                 Spacer(Modifier.size(3.dp))
                 Text(
-                    "Horario programado · $clock",
+                    stringResource(R.string.horario_programado_clock, clock),
                     style = MaterialTheme.typography.labelMedium,
                     color = MinorAmber,
                     fontWeight = FontWeight.SemiBold,
@@ -554,8 +555,8 @@ private fun SaliYaCard(walkSeconds: Int, trains: List<Pair<Int, String>>) {
     if (catchable == null) {
         val soonest = trains.first()
         accent = MajorRed
-        title = "No llegás caminando"
-        subtitle = "Estás a ~$walkMin min · el próximo a ${soonest.second} sale en ${soonest.first / 60} min"
+        title = stringResource(R.string.no_llegas)
+        subtitle = stringResource(R.string.no_llegas_sub, walkMin, soonest.second, soonest.first / 60)
     } else {
         val eta = catchable.first
         val leave = eta - walkSeconds
@@ -564,8 +565,8 @@ private fun SaliYaCard(walkSeconds: Int, trains: List<Pair<Int, String>>) {
             leave < 300 -> MinorAmber
             else -> OnTimeGreen
         }
-        title = if (leave < 60) "¡Salí ya!" else "Salí en ${leave / 60} min"
-        subtitle = "~$walkMin min caminando · tren a ${catchable.second} en ${eta / 60} min"
+        title = if (leave < 60) stringResource(R.string.sali_ya) else stringResource(R.string.sali_en, leave / 60)
+        subtitle = stringResource(R.string.sali_sub, walkMin, catchable.second, eta / 60)
     }
 
     Card(
@@ -634,7 +635,7 @@ private fun ArrivalCard(arrival: Arrival, nowSec: Long) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     arrival.platform?.let {
                         Text(
-                            "Andén $it",
+                            stringResource(R.string.anden, it),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -644,7 +645,7 @@ private fun ArrivalCard(arrival: Arrival, nowSec: Long) {
                             Text("  ·  ", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(
-                            "sale $t",
+                            stringResource(R.string.sale_hora, t),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

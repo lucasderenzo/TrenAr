@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ar.trenar.app.R
 import ar.trenar.app.data.model.BikeNearby
 import ar.trenar.app.ui.theme.MajorRed
 import ar.trenar.app.ui.theme.OnTimeGreen
@@ -85,7 +87,11 @@ fun BikeStationRow(
                 }
                 item.distanceMeters?.let { d ->
                     Text(
-                        "a ${Geo.formatDistance(d)} · ~${((item.walkSeconds ?: 0) / 60).coerceAtLeast(1)} min caminando",
+                        stringResource(
+                            R.string.caminando_dist,
+                            Geo.formatDistance(d),
+                            ((item.walkSeconds ?: 0) / 60).coerceAtLeast(1),
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -106,14 +112,14 @@ fun BikeStationRow(
                     )
                     Spacer(Modifier.width(3.dp))
                     Text(
-                        "bicis",
+                        stringResource(R.string.bicis_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 3.dp),
                     )
                 }
                 Text(
-                    "${st.docks} anclajes",
+                    stringResource(R.string.anclajes_count, st.docks),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.End,
@@ -123,7 +129,7 @@ fun BikeStationRow(
                 IconButton(onClick = onToggleFavorite) {
                     Icon(
                         if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                        contentDescription = if (isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
+                        contentDescription = if (isFavorite) stringResource(R.string.quitar_favoritos) else stringResource(R.string.agregar_favoritos),
                         tint = if (isFavorite) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                     )

@@ -22,9 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ar.trenar.app.R
 import ar.trenar.app.data.model.DelayStatus
 import ar.trenar.app.ui.theme.CancelledRed
 import ar.trenar.app.ui.theme.MajorRed
@@ -42,11 +45,11 @@ fun statusColor(status: DelayStatus): Color = when (status) {
 @Composable
 fun DelayBadge(status: DelayStatus, delayMinutes: Int?) {
     val (label, color) = when (status) {
-        DelayStatus.ON_TIME -> "En hora" to OnTimeGreen
-        DelayStatus.MINOR -> ("+${delayMinutes ?: 1} min") to MinorAmber
-        DelayStatus.MAJOR -> ("+${delayMinutes ?: 10} min") to MajorRed
-        DelayStatus.CANCELLED -> "Cancelado" to CancelledRed
-        DelayStatus.UNKNOWN -> "s/d" to Color(0xFF90A4AE)
+        DelayStatus.ON_TIME -> stringResource(R.string.en_hora) to OnTimeGreen
+        DelayStatus.MINOR -> stringResource(R.string.mas_min, delayMinutes ?: 1) to MinorAmber
+        DelayStatus.MAJOR -> stringResource(R.string.mas_min, delayMinutes ?: 10) to MajorRed
+        DelayStatus.CANCELLED -> stringResource(R.string.cancelado) to CancelledRed
+        DelayStatus.UNKNOWN -> stringResource(R.string.sin_datos) to Color(0xFF90A4AE)
     }
     Box(
         modifier = Modifier
@@ -85,6 +88,7 @@ fun LineChip(line: String, color: Color) {
 fun FreshnessPill(secondsAgo: Long) {
     val stale = secondsAgo > 120
     val color = if (stale) MinorAmber else OnTimeGreen
+    val ctx = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
@@ -93,7 +97,7 @@ fun FreshnessPill(secondsAgo: Long) {
         )
         Spacer(Modifier.width(5.dp))
         Text(
-            text = "actualizado ${Format.freshness(secondsAgo)}",
+            text = stringResource(R.string.actualizado, Format.freshness(ctx, secondsAgo)),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

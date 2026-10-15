@@ -1,0 +1,139 @@
+<resources>
+    <string name="tagline">When does your train arrive?</string>
+
+    <string name="widget_description">Next trains from your favorite station.</string>
+    <string name="widget_empty">Mark a favorite station to see it here</string>
+
+    <string name="channel_delays_name">Delays and alerts</string>
+    <string name="channel_delays_desc">Notices about delays, cancellations and service status.</string>
+    <string name="channel_leave_name">Leave now</string>
+    <string name="channel_leave_desc">Reminders to leave on time for your station.</string>
+    <string name="channel_track_name">Train tracking</string>
+    <string name="channel_track_desc">Countdown to the next train while you follow a station.</string>
+
+    <string name="nav_cercanas">Nearby</string>
+    <string name="nav_favoritos">Favorites</string>
+    <string name="nav_mapa">Map</string>
+    <string name="nav_alertas">Alerts</string>
+    <string name="nav_ajustes">Settings</string>
+
+    <string name="tren">Train</string>
+    <string name="ecobici">Ecobici</string>
+    <string name="volver">Back</string>
+    <string name="actualizar">Refresh</string>
+    <string name="limpiar">Clear</string>
+    <string name="buscar_estacion">Search station</string>
+    <string name="en_hora">On time</string>
+    <string name="llegando">Arriving</string>
+    <string name="cancelado">Cancelled</string>
+    <string name="sin_datos">n/a</string>
+    <string name="min">min</string>
+    <string name="seg">s</string>
+    <string name="ya">Now!</string>
+    <string name="menos_1_min">&lt; 1 min</string>
+    <string name="min_value">%1$d min</string>
+    <string name="mas_min">+%1$d min</string>
+    <string name="a_destino">to %1$s</string>
+    <string name="a_distancia">%1$s away</string>
+    <string name="caminando_dist">%1$s away · ~%2$d min walk</string>
+    <string name="bicis_count">%1$d bikes</string>
+    <string name="bicis_label">bikes</string>
+    <string name="anclajes_count">%1$d docks</string>
+    <string name="agregar_favoritos">Add to favorites</string>
+    <string name="quitar_favoritos">Remove from favorites</string>
+    <string name="actualizado">updated %1$s</string>
+    <string name="recien">just now</string>
+    <string name="hace_min">%1$d min ago</string>
+    <string name="hace_seg">%1$ds ago</string>
+
+    <string name="radio">Radius</string>
+    <string name="radio_1km">1 km</string>
+    <string name="radio_3km">3 km</string>
+    <string name="radio_sin">No radius</string>
+    <string name="cercanas_sin_estaciones_title">No stations nearby</string>
+    <string name="cercanas_sin_estaciones_sub">Search your station by name.</string>
+    <string name="cercanas_sin_ecobici_title">No Ecobici nearby</string>
+    <string name="cercanas_sin_ecobici_sub">We couldn\'t find Ecobici stations near you.</string>
+    <string name="no_pudimos_ubicarte">Couldn\'t find your location</string>
+    <string name="activa_gps">Turn on GPS and try again, or search your station.</string>
+    <string name="encontra_cerca_title">Find what\'s near you</string>
+    <string name="encontra_cerca_sub">With your location we show the nearest train and Ecobici stations.</string>
+    <string name="usar_ubicacion">Use my location</string>
+
+    <string name="fav_trenes">Trains</string>
+    <string name="fav_empty_title">No favorites yet</string>
+    <string name="fav_empty_sub">Tap the star on a station or an Ecobici one to keep it handy.</string>
+
+    <string name="search_hint">e.g. Once, Retiro, Moreno…</string>
+    <string name="search_empty_title">Search your station</string>
+    <string name="search_empty_sub">Type the name and pick from the list.</string>
+    <string name="search_no_results_title">No results</string>
+    <string name="search_no_results_sub">Try another name.</string>
+
+    <string name="alertas_servicio">Service</string>
+    <string name="alertas_sin_title">No alerts</string>
+    <string name="alertas_sin_sub">No service alerts right now.</string>
+    <string name="error_no_cargar">Couldn\'t load</string>
+
+    <string name="estacion">Station</string>
+    <string name="como_llego">Directions</string>
+    <string name="favorita">Favorite</string>
+    <string name="seguir_tren">Follow this train</string>
+    <string name="trenes_en_vivo">Live trains</string>
+    <string name="sin_trenes_posicion">No trains with live position right now</string>
+    <string name="tren_a">Train to %1$s</string>
+    <string name="todos">All</string>
+    <string name="anden">Platform %1$s</string>
+    <string name="sale_hora">departs %1$s</string>
+    <string name="sin_proximos_title">No upcoming trains</string>
+    <string name="sin_proximos_sub">There may be no service at this time. Try later.</string>
+    <string name="error_sin_conexion">No internet connection.</string>
+    <string name="error_timeout">The service took too long to respond.</string>
+    <string name="error_generico">We couldn\'t get the arrivals. Try again.</string>
+    <string name="horarios_programados">Scheduled times</string>
+    <string name="horario_oficial">Official schedule</string>
+    <string name="horario_programado_clock">Scheduled · %1$s</string>
+    <string name="sin_info_vivo">No real-time info</string>
+    <string name="sin_info_vivo_sub">The %1$s line %2$s doesn\'t publish live arrivals. Check the official schedule.</string>
+    <string name="la_opera">is run by %1$s and</string>
+    <string name="programados_fuente">Scheduled times from the official source (%1$s). They don\'t reflect real-time delays.</string>
+    <string name="sali_ya">Leave now!</string>
+    <string name="sali_en">Leave in %1$d min</string>
+    <string name="no_llegas">You won\'t make it on foot</string>
+    <string name="no_llegas_sub">You\'re ~%1$d min away · next to %2$s in %3$d min</string>
+    <string name="sali_sub">~%1$d min walk · train to %2$s in %3$d min</string>
+
+    <string name="red_en_vivo">Live network</string>
+    <string name="mi_ubicacion">My location</string>
+    <string name="acercar">Zoom in</string>
+    <string name="alejar">Zoom out</string>
+    <string name="estas_aca">You\'re here</string>
+    <string name="pill_en_vivo">%1$s · %2$d live</string>
+    <string name="pill_sin_vivo">%1$s · %2$d stations · no live</string>
+    <string name="pill_ecobici">Ecobici · %1$d stations</string>
+    <string name="bike_info">%1$s: %2$d bikes · %3$d docks</string>
+
+    <string name="avisos_demoras_title">Delay alerts</string>
+    <string name="avisos_demoras_sub">Notifications when there are delays or cancellations at your favorite stations.</string>
+    <string name="idioma_title">Language</string>
+    <string name="idioma_sub">Choose the app language.</string>
+    <string name="idioma_auto">Automatic</string>
+    <string name="creditos">Credits</string>
+    <string name="credito_idea">Idea and direction: Lucas De Renzo</string>
+    <string name="credito_dev">Development: Claude (Opus) — Anthropic</string>
+    <string name="credito_equipo">Made as a team, human + AI. 🚆</string>
+    <string name="sobre_datos_title">About the data</string>
+    <string name="sobre_datos_body">Real-time data from the Trenes Argentinos (SOFSE) API. Unofficial app, non-commercial. Times may vary; always check on the platform.</string>
+    <string name="version_line">TrenAr v%1$s</string>
+
+    <string name="notif_stop_following">Stop following</string>
+    <string name="notif_sin_proximos">No upcoming trains now</string>
+    <string name="notif_servicio_cancelado">Service cancelled</string>
+    <string name="notif_llegando">Arriving! %1$s</string>
+    <string name="notif_demora_title">Delay on %1$s · %2$s</string>
+    <string name="notif_cancelado_title">Train cancelled · %1$s</string>
+    <string name="notif_demora_body">%1$s: +%2$d min%3$s.</string>
+    <string name="notif_cancelado_body">%1$s (%2$s) was cancelled.</string>
+    <string name="notif_tu_estacion">your station</string>
+    <string name="notif_anden">· platform %1$s</string>
+</resources>

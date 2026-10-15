@@ -33,24 +33,24 @@ class DelayWorker(
 
         for (stationId in favorites) {
             val board = runCatching { repo.board(stationId, cantidad = 8) }.getOrNull() ?: continue
-            val stationName = board.station?.name ?: "tu estación"
+            val stationName = board.station?.name ?: app.getString(ar.trenar.app.R.string.notif_tu_estacion)
             for (arrival in board.arrivals.take(6)) {
                 when (arrival.status()) {
                     DelayStatus.CANCELLED -> NotificationHelper.notifyDelay(
                         context = app,
                         notifId = ("c" + arrival.serviceId).hashCode(),
-                        title = "Tren cancelado · $stationName",
-                        text = "${arrival.destination} (${arrival.line}) fue cancelado.",
+                        title = app.getString(ar.trenar.app.R.string.notif_cancelado_title, stationName),
+                        text = app.getString(ar.trenar.app.R.string.notif_cancelado_body, arrival.destination, arrival.line),
                         stationId = stationId,
                     )
                     DelayStatus.MAJOR -> {
                         val min = arrival.delayMinutes() ?: continue
-                        val platform = arrival.platform?.let { " · andén $it" } ?: ""
+                        val platform = arrival.platform?.let { " " + app.getString(ar.trenar.app.R.string.notif_anden, it) } ?: ""
                         NotificationHelper.notifyDelay(
                             context = app,
                             notifId = ("d" + arrival.serviceId).hashCode(),
-                            title = "Demora en ${arrival.line} · $stationName",
-                            text = "${arrival.destination}: +$min min$platform.",
+                            title = app.getString(ar.trenar.app.R.string.notif_demora_title, arrival.line, stationName),
+                            text = app.getString(ar.trenar.app.R.string.notif_demora_body, arrival.destination, min, platform),
                             stationId = stationId,
                         )
                     }

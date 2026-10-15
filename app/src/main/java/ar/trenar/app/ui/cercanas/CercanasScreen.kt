@@ -36,10 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.trenar.app.R
 import ar.trenar.app.ui.common.BikeStationRow
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.StationArrivalRow
@@ -83,13 +85,13 @@ fun CercanasScreen(
                 FilterChip(
                     selected = state.mode == CercanasMode.TREN,
                     onClick = { viewModel.setMode(CercanasMode.TREN) },
-                    label = { Text("Tren") },
+                    label = { Text(stringResource(R.string.tren)) },
                     leadingIcon = { Icon(Icons.Filled.Train, contentDescription = null, modifier = Modifier.width(20.dp)) },
                 )
                 FilterChip(
                     selected = state.mode == CercanasMode.ECOBICI,
                     onClick = { viewModel.setMode(CercanasMode.ECOBICI) },
-                    label = { Text("Ecobici") },
+                    label = { Text(stringResource(R.string.ecobici)) },
                     leadingIcon = { Icon(Icons.Filled.DirectionsBike, contentDescription = null, modifier = Modifier.width(20.dp)) },
                 )
             }
@@ -101,15 +103,19 @@ fun CercanasScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Radio",
+                    stringResource(R.string.radio),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                listOf(1000 to "1 km", 3000 to "3 km", Int.MAX_VALUE to "Sin radio").forEach { (m, label) ->
+                listOf(
+                    1000 to R.string.radio_1km,
+                    3000 to R.string.radio_3km,
+                    Int.MAX_VALUE to R.string.radio_sin,
+                ).forEach { (m, labelRes) ->
                     FilterChip(
                         selected = state.radiusMeters == m,
                         onClick = { viewModel.setRadius(m) },
-                        label = { Text(label) },
+                        label = { Text(stringResource(labelRes)) },
                     )
                 }
             }
@@ -133,15 +139,15 @@ fun CercanasScreen(
             state.locationUnavailable -> item {
                 EmptyState(
                     icon = Icons.Filled.LocationOn,
-                    title = "No pudimos ubicarte",
-                    subtitle = "Activá el GPS y probá de nuevo, o buscá tu estación.",
+                    title = stringResource(R.string.no_pudimos_ubicarte),
+                    subtitle = stringResource(R.string.activa_gps),
                 )
             }
             empty -> item {
                 EmptyState(
                     icon = if (tren) Icons.Outlined.NearMe else Icons.Filled.DirectionsBike,
-                    title = if (tren) "Sin estaciones cerca" else "Sin Ecobici cerca",
-                    subtitle = if (tren) "Buscá tu estación por nombre." else "No encontramos estaciones de Ecobici cerca tuyo.",
+                    title = stringResource(if (tren) R.string.cercanas_sin_estaciones_title else R.string.cercanas_sin_ecobici_title),
+                    subtitle = stringResource(if (tren) R.string.cercanas_sin_estaciones_sub else R.string.cercanas_sin_ecobici_sub),
                 )
             }
             tren -> items(state.items, key = { it.station.id }) { item ->
@@ -176,14 +182,14 @@ private fun CercanasHeader(onOpenSearch: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "Cercanas",
+            stringResource(R.string.nav_cercanas),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
         IconButton(onClick = onOpenSearch) {
-            Icon(Icons.Filled.Search, contentDescription = "Buscar estación")
+            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.buscar_estacion))
         }
     }
 }
@@ -197,20 +203,20 @@ private fun LocationPrompt(onGrant: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                "Encontrá lo que tenés cerca",
+                stringResource(R.string.encontra_cerca_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "Con tu ubicación te mostramos las estaciones de tren y las de Ecobici más próximas.",
+                stringResource(R.string.encontra_cerca_sub),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Button(onClick = onGrant) {
                 Icon(Icons.Filled.LocationOn, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Usar mi ubicación")
+                Text(stringResource(R.string.usar_ubicacion))
             }
         }
     }

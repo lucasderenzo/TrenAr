@@ -108,10 +108,13 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
         _state.update { it.copy(filterDestination = destination) }
     }
 
-    private fun friendly(e: Exception): String = when (e) {
-        is java.net.UnknownHostException -> "Sin conexión a internet."
-        is java.net.SocketTimeoutException -> "El servicio tardó demasiado en responder."
-        else -> "No pudimos obtener los arribos. Probá de nuevo."
+    private fun friendly(e: Exception): String {
+        val c = ServiceLocator.appContext
+        return when (e) {
+            is java.net.UnknownHostException -> c.getString(ar.trenar.app.R.string.error_sin_conexion)
+            is java.net.SocketTimeoutException -> c.getString(ar.trenar.app.R.string.error_timeout)
+            else -> c.getString(ar.trenar.app.R.string.error_generico)
+        }
     }
 
     companion object {
