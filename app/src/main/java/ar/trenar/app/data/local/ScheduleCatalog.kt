@@ -92,9 +92,11 @@ class ScheduleCatalog(private val context: Context) {
             .take(limit)
     }
 
-    private fun dayStations(plan: LinePlan, date: LocalDate): DayStations = when (date.dayOfWeek) {
-        DayOfWeek.SATURDAY -> plan.saturday ?: plan.weekday
-        DayOfWeek.SUNDAY -> plan.sunday ?: plan.weekday
+    private fun dayStations(plan: LinePlan, date: LocalDate): DayStations = when {
+        // Feriados nacionales run the Sunday/holiday timetable.
+        ar.trenar.app.data.ArHolidays.isHoliday(date) -> plan.sunday ?: plan.weekday
+        date.dayOfWeek == DayOfWeek.SATURDAY -> plan.saturday ?: plan.weekday
+        date.dayOfWeek == DayOfWeek.SUNDAY -> plan.sunday ?: plan.weekday
         else -> plan.weekday
     }
 
