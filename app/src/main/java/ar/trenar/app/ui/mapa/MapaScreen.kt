@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color as AndroidColor
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
@@ -55,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.R
 import ar.trenar.app.data.LineInfo
+import ar.trenar.app.data.LineTerminals
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.ui.common.LineBadge
 import ar.trenar.app.ui.common.TabHeader
@@ -176,25 +178,39 @@ fun MapaScreen(
                         }
                     } else {
                         val argb = LineColors.colorFor(state.selected).toArgb()
-                        val stationIcon = buildMarker(ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train)
-                        val trainIcon = buildMarker(ctx, density, argb, 34f, OnTimeGreen.toArgb(), 3.5f, R.drawable.ic_stat_train)
                         state.stations.forEach { st ->
+                            val label = if (LineTerminals.isTerminal(state.selected, st.name)) st.name else null
+                            val art = buildStationMarker(
+                                ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, label,
+                            )
                             Marker(mv).apply {
                                 position = GeoPoint(st.lat, st.lng)
-                                icon = stationIcon
-                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                                icon = art.drawable
+                                setAnchor(Marker.ANCHOR_CENTER, art.anchorY)
                                 title = st.name
                                 setOnMarkerClickListener { _, _ -> onOpenStation(st.id); true }
                             }.also { mv.overlays.add(it) }
                         }
+                        // a 3D-ish side-view train sprite (line-colored, white outline)
+                        val trainSprite = buildTrainSprite(ctx, density, argb, 30f)
                         state.trains.forEach { t ->
                             val lat = t.trainLat ?: return@forEach
                             val lng = t.trainLng ?: return@forEach
                             Marker(mv).apply {
                                 position = GeoPoint(lat, lng)
-                                icon = trainIcon
+                                icon = trainSprite
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                                 title = ctx.getString(R.string.tren_a, t.destination)
+                                setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
+                            }.also { mv.overlays.add(it) }
+                        }
+                        // schedule-estimated positions for the no-realtime lines
+                        state.estimatedTrains.forEach { t ->
+                            Marker(mv).apply {
+                                position = GeoPoint(t.lat, t.lng)
+                                icon = trainSprite
+                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                                title = ctx.getString(R.string.tren_estimado_a, t.destination)
                                 setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
                             }.also { mv.overlays.add(it) }
                         }
@@ -294,6 +310,9 @@ private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, de
     }
 }
 
+/** A marker drawable together with the vertical anchor that keeps its hotspot on the geo point. */
+private class MarkerArt(val drawable: Drawable, val anchorY: Float)
+
 /** A circular marker: [fill] core + a [ringColor] ring + a white [glyphRes] glyph. */
 private fun buildMarker(
     ctx: Context,
@@ -308,21 +327,105 @@ private fun buildMarker(
     val ringW = ringWidthDp * density
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
+    drawCircleGlyph(canvas, ctx, size / 2f, size / 2f, size, ringW, fill, ringColor, glyphRes)
+    return BitmapDrawable(ctx.resources, bmp)
+}
+
+/** Draws a filled circle + ring + centered white glyph onto [canvas] at ([cx],[cy]). */
+private fun drawCircleGlyph(
+    canvas: Canvas,
+    ctx: Context,
+    cx: Float,
+    cy: Float,
+    size: Int,
+    ringW: Float,
+    fill: Int,
+    ringColor: Int,
+    glyphRes: Int,
+) {
     val r = size / 2f
-    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = fill }
-    canvas.drawCircle(r, r, r - ringW, fillPaint)
-    val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = ringColor
-        style = Paint.Style.STROKE
-        strokeWidth = ringW
-    }
-    canvas.drawCircle(r, r, r - ringW / 2f - 0.5f, ringPaint)
-    val glyph = ContextCompat.getDrawable(ctx, glyphRes)?.mutate()
-    if (glyph != null) {
+    canvas.drawCircle(cx, cy, r - ringW, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fill })
+    canvas.drawCircle(
+        cx, cy, r - ringW / 2f - 0.5f,
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ringColor
+            style = Paint.Style.STROKE
+            strokeWidth = ringW
+        },
+    )
+    ContextCompat.getDrawable(ctx, glyphRes)?.mutate()?.let { glyph ->
         glyph.setTint(AndroidColor.WHITE)
-        val inset = (ringW + size * 0.2f).toInt()
-        glyph.setBounds(inset, inset, size - inset, size - inset)
+        val inset = (ringW + size * 0.2f)
+        glyph.setBounds(
+            (cx - r + inset).toInt(), (cy - r + inset).toInt(),
+            (cx + r - inset).toInt(), (cy + r - inset).toInt(),
+        )
         glyph.draw(canvas)
     }
+}
+
+/**
+ * A circular station marker; when [label] is set (terminal stations), the name is drawn in bold
+ * underneath the circle with a white halo so it stays readable over the map tiles.
+ */
+private fun buildStationMarker(
+    ctx: Context,
+    density: Float,
+    fill: Int,
+    sizeDp: Float,
+    ringColor: Int,
+    ringWidthDp: Float,
+    glyphRes: Int,
+    label: String?,
+): MarkerArt {
+    val circle = (sizeDp * density).toInt().coerceAtLeast(8)
+    val ringW = ringWidthDp * density
+    if (label == null) {
+        val bmp = Bitmap.createBitmap(circle, circle, Bitmap.Config.ARGB_8888)
+        drawCircleGlyph(Canvas(bmp), ctx, circle / 2f, circle / 2f, circle, ringW, fill, ringColor, glyphRes)
+        return MarkerArt(BitmapDrawable(ctx.resources, bmp), 0.5f)
+    }
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = AndroidColor.BLACK
+        textSize = 11f * density
+        typeface = Typeface.DEFAULT_BOLD
+        textAlign = Paint.Align.CENTER
+    }
+    val haloPaint = Paint(textPaint).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * density
+        color = AndroidColor.WHITE
+    }
+    val fm = textPaint.fontMetrics
+    val textH = fm.descent - fm.ascent
+    val gap = 2f * density
+    val textW = textPaint.measureText(label)
+    val w = maxOf(circle.toFloat(), textW + 6f * density).toInt()
+    val h = (circle + gap + textH).toInt() + 1
+    val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bmp)
+    val cx = w / 2f
+    drawCircleGlyph(canvas, ctx, cx, circle / 2f, circle, ringW, fill, ringColor, glyphRes)
+    val baseY = circle + gap - fm.ascent
+    canvas.drawText(label, cx, baseY, haloPaint)
+    canvas.drawText(label, cx, baseY, textPaint)
+    return MarkerArt(BitmapDrawable(ctx.resources, bmp), (circle / 2f) / h)
+}
+
+/** A side-view train sprite tinted in the line color with a white outline (no badge). */
+private fun buildTrainSprite(ctx: Context, density: Float, fillArgb: Int, sizeDp: Float): Drawable {
+    val size = (sizeDp * density).toInt().coerceAtLeast(10)
+    val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bmp)
+    val glyph = ContextCompat.getDrawable(ctx, R.drawable.ic_train_side)?.mutate()
+        ?: return BitmapDrawable(ctx.resources, bmp)
+    // white outline (full size) then the colored body slightly inset
+    glyph.setTint(AndroidColor.WHITE)
+    glyph.setBounds(0, 0, size, size)
+    glyph.draw(canvas)
+    val inset = (2f * density).toInt()
+    glyph.setTint(fillArgb)
+    glyph.setBounds(inset, inset, size - inset, size - inset)
+    glyph.draw(canvas)
     return BitmapDrawable(ctx.resources, bmp)
 }

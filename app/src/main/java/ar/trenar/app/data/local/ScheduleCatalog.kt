@@ -92,6 +92,86 @@ class ScheduleCatalog(private val context: Context) {
             .take(limit)
     }
 
+    /**
+     * Estimated live positions of trains on a no-realtime line, derived from the bundled
+     * timetable. Trips are reconstructed greedily (in travel order) from the per-station
+     * passing times, then each in-progress trip is placed between the two stations it is
+     * currently between, interpolating by elapsed fraction.
+     *
+     * @param coords ordered station coordinates (index 0 = terminalA), same order the schedule uses.
+     */
+    suspend fun estimatedTrains(
+        line: String,
+        coords: List<Pair<Double, Double>>,
+        nowEpochSec: Long,
+    ): List<ar.trenar.app.data.model.EstimatedTrain> {
+        val plan = plans()[line] ?: return emptyList()
+        val n = coords.size
+        if (n < 2) return emptyList()
+        val date = Instant.ofEpochSecond(nowEpochSec).atZone(zone).toLocalDate()
+        val day = dayStations(plan, date)
+        val out = ArrayList<ar.trenar.app.data.model.EstimatedTrain>()
+        // toB travels 0 -> n-1 (towards terminalB); toA travels n-1 -> 0 (towards terminalA).
+        placeDirection(day.toB, coords, (0 until n).toList(), date, nowEpochSec, plan.terminalB, out)
+        placeDirection(day.toA, coords, (n - 1 downTo 0).toList(), date, nowEpochSec, plan.terminalA, out)
+        return out
+    }
+
+    private fun placeDirection(
+        times: List<List<String>>,
+        coords: List<Pair<Double, Double>>,
+        order: List<Int>,
+        date: LocalDate,
+        nowEpochSec: Long,
+        destination: String,
+        out: MutableList<ar.trenar.app.data.model.EstimatedTrain>,
+    ) {
+        if (times.isEmpty()) return
+        val n = coords.size
+        // consumable epoch lists per station index, sorted ascending
+        val remaining = Array(n) { idx ->
+            (times.getOrNull(idx) ?: emptyList())
+                .mapNotNull { epochAt(date, it) }
+                .sorted()
+                .toMutableList()
+        }
+        val maxGapSec = 30 * 60L  // generous cap between adjacent stations (dwell + travel)
+
+        // Greedily build trips in travel order; a station's leftover times start new trips there.
+        for (j in order.indices) {
+            val s = order[j]
+            while (remaining[s].isNotEmpty()) {
+                var curTime = remaining[s].removeAt(0)
+                var curIdx = s
+                // extend this trip forward through the remaining stations in travel order
+                for (jj in (j + 1) until order.size) {
+                    val ns = order[jj]
+                    val cand = remaining[ns].firstOrNull { it > curTime && it - curTime <= maxGapSec }
+                        ?: break
+                    remaining[ns].remove(cand)
+                    // is "now" within this segment? then place the train here
+                    if (nowEpochSec in curTime..cand) {
+                        val frac = if (cand > curTime)
+                            (nowEpochSec - curTime).toDouble() / (cand - curTime) else 0.0
+                        val (aLat, aLng) = coords[curIdx]
+                        val (bLat, bLng) = coords[ns]
+                        out.add(
+                            ar.trenar.app.data.model.EstimatedTrain(
+                                lat = aLat + (bLat - aLat) * frac,
+                                lng = aLng + (bLng - aLng) * frac,
+                                destination = destination,
+                                fromIndex = curIdx,
+                                toIndex = ns,
+                            ),
+                        )
+                    }
+                    curTime = cand
+                    curIdx = ns
+                }
+            }
+        }
+    }
+
     private fun dayStations(plan: LinePlan, date: LocalDate): DayStations = when {
         // Feriados nacionales run the Sunday/holiday timetable.
         ar.trenar.app.data.ArHolidays.isHoliday(date) -> plan.sunday ?: plan.weekday

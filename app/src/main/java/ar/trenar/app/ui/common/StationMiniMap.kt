@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color as AndroidColor
-import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
@@ -12,12 +11,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.trenar.app.R
-import ar.trenar.app.ui.theme.OnTimeGreen
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -104,27 +101,19 @@ fun StationMiniMap(
     )
 }
 
-/** A circular line-colored train marker with a white glyph and a green "live" ring. */
+/** A side-view train sprite tinted in the line color with a white outline. */
 private fun trainMarker(ctx: Context, density: Float, fillArgb: Int): Drawable {
     val size = (30f * density).toInt().coerceAtLeast(10)
-    val ringW = 3f * density
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
-    val r = size / 2f
-    canvas.drawCircle(r, r, r - ringW, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fillArgb })
-    canvas.drawCircle(
-        r, r, r - ringW / 2f - 0.5f,
-        Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = OnTimeGreen.toArgb()
-            style = Paint.Style.STROKE
-            strokeWidth = ringW
-        },
-    )
-    ContextCompat.getDrawable(ctx, R.drawable.ic_stat_train)?.mutate()?.let { glyph ->
-        glyph.setTint(AndroidColor.WHITE)
-        val inset = (ringW + size * 0.2f).toInt()
-        glyph.setBounds(inset, inset, size - inset, size - inset)
-        glyph.draw(canvas)
-    }
+    val glyph = ContextCompat.getDrawable(ctx, R.drawable.ic_train_side)?.mutate()
+        ?: return BitmapDrawable(ctx.resources, bmp)
+    glyph.setTint(AndroidColor.WHITE)
+    glyph.setBounds(0, 0, size, size)
+    glyph.draw(canvas)
+    val inset = (2f * density).toInt()
+    glyph.setTint(fillArgb)
+    glyph.setBounds(inset, inset, size - inset, size - inset)
+    glyph.draw(canvas)
     return BitmapDrawable(ctx.resources, bmp)
 }

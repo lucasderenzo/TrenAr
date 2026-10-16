@@ -1,15 +1,19 @@
 package ar.trenar.app.ui.cercanas
 
+import android.location.Geocoder
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.trenar.app.data.model.BikeNearby
 import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.di.ServiceLocator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 enum class CercanasMode { TREN, ECOBICI }
 
@@ -22,6 +26,8 @@ data class CercanasUiState(
     val locationUnavailable: Boolean = false,
     val radiusMeters: Int = 1000,
     val bikeFavorites: Set<String> = emptySet(),
+    /** User's current street address (reverse-geocoded), e.g. "Tres Arroyos 660". */
+    val currentAddress: String? = null,
 )
 
 class CercanasViewModel : ViewModel() {
@@ -67,6 +73,25 @@ class CercanasViewModel : ViewModel() {
         viewModelScope.launch { prefs.toggleBikeFavorite(id) }
     }
 
+    /** Best-effort reverse geocode to a "street number" string; null when unavailable/offline. */
+    private suspend fun reverseGeocode(loc: Location): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            if (!Geocoder.isPresent()) return@withContext null
+            val geocoder = Geocoder(ServiceLocator.appContext, Locale.getDefault())
+            @Suppress("DEPRECATION")
+            val results = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+            val a = results?.firstOrNull() ?: return@withContext null
+            val street = a.thoroughfare?.trim()?.takeIf { it.isNotBlank() }
+            val number = a.subThoroughfare?.trim()?.takeIf { it.isNotBlank() }
+            when {
+                street != null && number != null -> "$street $number"
+                street != null -> street
+                else -> a.featureName?.takeIf { it.any(Char::isLetter) }
+                    ?: a.subLocality ?: a.locality
+            }
+        }.getOrNull()
+    }
+
     private fun load(mode: CercanasMode, force: Boolean) {
         viewModelScope.launch {
             if (!location.hasPermission()) {
@@ -79,6 +104,12 @@ class CercanasViewModel : ViewModel() {
                 if (loc == null) {
                     _state.update { it.copy(loading = false, locationUnavailable = true) }
                     return@launch
+                }
+                if (force || _state.value.currentAddress == null) {
+                    viewModelScope.launch {
+                        val addr = reverseGeocode(loc)
+                        if (addr != null) _state.update { it.copy(currentAddress = addr) }
+                    }
                 }
                 val radius = _state.value.radiusMeters
                 val noRadius = radius == Int.MAX_VALUE

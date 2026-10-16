@@ -2,8 +2,10 @@ package ar.trenar.app.ui.mapa
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ar.trenar.app.data.LineInfo
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BikeStation
+import ar.trenar.app.data.model.EstimatedTrain
 import ar.trenar.app.data.model.StationRef
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +18,13 @@ data class MapaUiState(
     val selected: String = "",          // a line name, or ECOBICI
     val stations: List<StationRef> = emptyList(),
     val trains: List<Arrival> = emptyList(),
+    /** Schedule-estimated positions, for no-realtime lines (Urquiza / Belgrano Norte). */
+    val estimatedTrains: List<EstimatedTrain> = emptyList(),
     val bikes: List<BikeStation> = emptyList(),
     val loading: Boolean = false,
 ) {
     val isBikes: Boolean get() = selected == MapaViewModel.ECOBICI
+    val isEstimated: Boolean get() = !isBikes && selected.isNotBlank() && !LineInfo.hasRealtime(selected)
 }
 
 class MapaViewModel : ViewModel() {
@@ -51,7 +56,17 @@ class MapaViewModel : ViewModel() {
     private fun loadLine(line: String) {
         viewModelScope.launch {
             val stations = repo.stationsOfLine(line)
-            _state.update { it.copy(stations = stations, trains = emptyList(), loading = true) }
+            _state.update {
+                it.copy(stations = stations, trains = emptyList(), estimatedTrains = emptyList(), loading = true)
+            }
+            if (!LineInfo.hasRealtime(line)) {
+                val est = runCatching { repo.estimatedTrains(line) }.getOrDefault(emptyList())
+                _state.update {
+                    if (it.selected == line) it.copy(estimatedTrains = est, loading = false)
+                    else it.copy(loading = false)
+                }
+                return@launch
+            }
             val trains = runCatching { repo.liveTrains(line) }.getOrDefault(emptyList())
             _state.update {
                 if (it.selected == line) it.copy(trains = trains, loading = false)

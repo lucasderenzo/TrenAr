@@ -82,6 +82,7 @@
     <string name="trenes_en_vivo">Trens ao vivo</string>
     <string name="sin_trenes_posicion">Nenhum trem com posição ao vivo agora</string>
     <string name="tren_a">Trem para %1$s</string>
+    <string name="tren_estimado_a">Trem estimado para %1$s</string>
     <string name="todos">Todos</string>
     <string name="anden">Plataforma %1$s</string>
     <string name="sale_hora">sai %1$s</string>

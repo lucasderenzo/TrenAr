@@ -76,7 +76,7 @@ fun CercanasScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { CercanasHeader(onOpenSearch) }
+        item { CercanasHeader(onOpenSearch, state.currentAddress) }
         item {
             Row(
                 Modifier.padding(horizontal = 16.dp),
@@ -174,22 +174,42 @@ fun CercanasScreen(
 }
 
 @Composable
-private fun CercanasHeader(onOpenSearch: () -> Unit) {
-    Row(
+private fun CercanasHeader(onOpenSearch: () -> Unit, address: String?) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            stringResource(R.string.nav_cercanas),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onOpenSearch) {
-            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.buscar_estacion))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.nav_cercanas),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onOpenSearch) {
+                Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.buscar_estacion))
+            }
+        }
+        if (address != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 1.dp, bottom = 2.dp),
+            ) {
+                Icon(
+                    Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(16.dp),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    address,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

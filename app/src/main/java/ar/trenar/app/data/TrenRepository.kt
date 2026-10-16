@@ -148,6 +148,19 @@ class TrenRepository(
             .distinctBy { it.serviceId }
     }
 
+    /**
+     * Estimated train positions for a no-realtime line (Urquiza / Belgrano Norte), derived from
+     * the bundled timetable. Empty for lines that have a live feed.
+     */
+    suspend fun estimatedTrains(line: String): List<ar.trenar.app.data.model.EstimatedTrain> {
+        if (LineInfo.hasRealtime(line)) return emptyList()
+        val ordered = stationsOfLine(line).sortedBy { it.id }
+        if (ordered.size < 2) return emptyList()
+        val coords = ordered.map { it.lat to it.lng }
+        val now = System.currentTimeMillis() / 1000
+        return runCatching { schedules.estimatedTrains(line, coords, now) }.getOrDefault(emptyList())
+    }
+
     /** Enrich a list of stations with each one's next train, fetched in parallel. */
     suspend fun withNextArrivals(stations: List<StationRef>): List<StationWithNext> = coroutineScope {
         stations.map { st -> async { StationWithNext(st, nextArrival(st.id)) } }.awaitAll()
@@ -184,6 +197,15 @@ class TrenRepository(
             } else {
                 emptyList()
             }
+            // Estimated train positions near this station, for the mini-map.
+            val estimated = if (index >= 0 && lineStations.size >= 2) {
+                val coords = lineStations.map { it.lat to it.lng }
+                runCatching { schedules.estimatedTrains(station.line, coords, now) }
+                    .getOrDefault(emptyList())
+                    .filter { kotlin.math.abs(it.fromIndex - index) <= 2 || kotlin.math.abs(it.toIndex - index) <= 2 }
+            } else {
+                emptyList()
+            }
             return@withContext BoardState(
                 station = station,
                 arrivals = emptyList(),
@@ -193,6 +215,7 @@ class TrenRepository(
                 scheduleUrl = LineInfo.scheduleUrl(station.line),
                 operator = LineInfo.operator(station.line),
                 scheduled = scheduled,
+                estimatedTrains = estimated,
             )
         }
         val resp = api.arrivals(stationId, cantidad = cantidad)

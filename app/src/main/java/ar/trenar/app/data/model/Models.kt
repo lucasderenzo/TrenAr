@@ -106,6 +106,20 @@ data class ScheduledDeparture(
         ((departureEpochSec - nowEpochSec) / 60).coerceAtLeast(0).toInt()
 }
 
+/**
+ * A train whose position is *estimated* from the bundled timetable (no live feed), placed by
+ * interpolating between the two stations it is currently travelling between.
+ */
+data class EstimatedTrain(
+    val lat: Double,
+    val lng: Double,
+    val destination: String,
+    /** Station index it last passed (ordered 0 = terminalA). */
+    val fromIndex: Int,
+    /** Station index it is heading to next. */
+    val toIndex: Int,
+)
+
 /** Result of loading a station board. */
 data class BoardState(
     val station: StationRef?,
@@ -120,4 +134,6 @@ data class BoardState(
     val operator: String? = null,
     /** Upcoming scheduled departures from the bundled timetable (no-realtime lines). */
     val scheduled: List<ScheduledDeparture> = emptyList(),
+    /** Schedule-estimated train positions near this station (no-realtime lines). */
+    val estimatedTrains: List<EstimatedTrain> = emptyList(),
 )

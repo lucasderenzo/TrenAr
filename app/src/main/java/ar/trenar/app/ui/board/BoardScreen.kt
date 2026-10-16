@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OpenInNew
@@ -90,7 +89,6 @@ fun BoardScreen(
     viewModel: BoardViewModel = viewModel(factory = BoardViewModel.factory(stationId)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val ctx = LocalContext.current
     var nowSec by remember { mutableLongStateOf(System.currentTimeMillis() / 1000) }
 
     // 1-second local tick for smooth countdowns
@@ -128,15 +126,6 @@ fun BoardScreen(
                     }
                 },
                 actions = {
-                    state.board?.station?.let { st ->
-                        IconButton(onClick = { MapsIntent.directionsTo(ctx, st.lat, st.lng, st.name) }) {
-                            Icon(
-                                Icons.Filled.Directions,
-                                contentDescription = stringResource(R.string.como_llego),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
                     if (state.board?.realtime != false) {
                         IconButton(onClick = { viewModel.toggleFollow() }) {
                             Icon(
@@ -225,7 +214,13 @@ private fun BoardContent(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         state.distanceMeters?.let { d ->
-            item { StationDistanceRow(distanceMeters = d, walkSeconds = state.walkSeconds) }
+            item {
+                StationDistanceRow(
+                    distanceMeters = d,
+                    walkSeconds = state.walkSeconds,
+                    onDirections = station?.let { st -> { MapsIntent.directionsTo(ctx, st.lat, st.lng, st.name) } },
+                )
+            }
         }
 
         val walk = state.walkSeconds
@@ -344,7 +339,13 @@ private fun ScheduleNoticeContent(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         distanceMeters?.let { d ->
-            item { StationDistanceRow(distanceMeters = d, walkSeconds = walkSeconds) }
+            item {
+                StationDistanceRow(
+                    distanceMeters = d,
+                    walkSeconds = walkSeconds,
+                    onDirections = station?.let { st -> { MapsIntent.directionsTo(ctx, st.lat, st.lng, st.name) } },
+                )
+            }
         }
         run {
             val saliTrains = board.scheduled
@@ -356,6 +357,13 @@ private fun ScheduleNoticeContent(
             }
         }
         if (station != null) {
+            val estTrains = board.estimatedTrains.map { t ->
+                MiniTrain(
+                    t.lat, t.lng,
+                    LineColors.colorFor(station.line).toArgb(),
+                    ctx.getString(R.string.tren_estimado_a, t.destination),
+                )
+            }
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -368,6 +376,7 @@ private fun ScheduleNoticeContent(
                             lng = station.lng,
                             label = station.name,
                             modifier = Modifier.fillMaxSize(),
+                            trains = estTrains,
                         )
                     }
                 }
@@ -483,7 +492,7 @@ private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "a ${dep.destination}",
+                    stringResource(R.string.a_destino, dep.destination),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -517,9 +526,13 @@ private fun ScheduledCard(dep: ScheduledDeparture, nowSec: Long) {
 }
 
 @Composable
-private fun StationDistanceRow(distanceMeters: Double, walkSeconds: Int?) {
+private fun StationDistanceRow(
+    distanceMeters: Double,
+    walkSeconds: Int?,
+    onDirections: (() -> Unit)? = null,
+) {
     Row(
-        Modifier.padding(start = 4.dp, top = 2.dp),
+        Modifier.fillMaxWidth().padding(start = 4.dp, top = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -535,6 +548,19 @@ private fun StationDistanceRow(distanceMeters: Double, walkSeconds: Int?) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (onDirections != null) {
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                Icons.Filled.DirectionsWalk,
+                contentDescription = stringResource(R.string.como_llego),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .clickable { onDirections() }
+                    .padding(3.dp),
+            )
+        }
     }
 }
 
@@ -622,7 +648,7 @@ private fun ArrivalCard(arrival: Arrival, nowSec: Long) {
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = arrival.destination,
+                    text = stringResource(R.string.a_destino, arrival.destination),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
