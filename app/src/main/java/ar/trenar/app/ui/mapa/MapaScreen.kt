@@ -191,14 +191,18 @@ fun MapaScreen(
                                 setOnMarkerClickListener { _, _ -> onOpenStation(st.id); true }
                             }.also { mv.overlays.add(it) }
                         }
-                        // a 3D-ish side-view train sprite (line-colored, white outline)
-                        val trainSprite = buildTrainSprite(ctx, density, argb, 30f)
+                        // a 3D-ish side-view train sprite (line-colored, white outline), one per heading
+                        val trainEast = buildTrainSprite(ctx, density, argb, 30f, flip = false)
+                        val trainWest = buildTrainSprite(ctx, density, argb, 30f, flip = true)
                         state.trains.forEach { t ->
                             val lat = t.trainLat ?: return@forEach
                             val lng = t.trainLng ?: return@forEach
+                            // Orient by where the destination terminal sits relative to the train.
+                            val destLng = state.stations.firstOrNull { it.name == t.destination }?.lng
+                            val east = destLng?.let { it >= lng } ?: true
                             Marker(mv).apply {
                                 position = GeoPoint(lat, lng)
-                                icon = trainSprite
+                                icon = if (east) trainEast else trainWest
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                                 title = ctx.getString(R.string.tren_a, t.destination)
                                 setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
@@ -208,7 +212,7 @@ fun MapaScreen(
                         state.estimatedTrains.forEach { t ->
                             Marker(mv).apply {
                                 position = GeoPoint(t.lat, t.lng)
-                                icon = trainSprite
+                                icon = if (t.headingEast) trainEast else trainWest
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                                 title = ctx.getString(R.string.tren_estimado_a, t.destination)
                                 setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
@@ -412,13 +416,21 @@ private fun buildStationMarker(
     return MarkerArt(BitmapDrawable(ctx.resources, bmp), (circle / 2f) / h)
 }
 
-/** A side-view train sprite tinted in the line color with a white outline (no badge). */
-private fun buildTrainSprite(ctx: Context, density: Float, fillArgb: Int, sizeDp: Float): Drawable {
+/**
+ * A side-view train sprite tinted in the line color with a white outline (no badge). The base
+ * glyph faces right (eastbound); [flip] mirrors it horizontally so the nose points left for
+ * westbound trains, matching the real direction of travel.
+ */
+private fun buildTrainSprite(ctx: Context, density: Float, fillArgb: Int, sizeDp: Float, flip: Boolean): Drawable {
     val size = (sizeDp * density).toInt().coerceAtLeast(10)
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
     val glyph = ContextCompat.getDrawable(ctx, R.drawable.ic_train_side)?.mutate()
         ?: return BitmapDrawable(ctx.resources, bmp)
+    if (flip) {
+        canvas.save()
+        canvas.scale(-1f, 1f, size / 2f, size / 2f)
+    }
     // white outline (full size) then the colored body slightly inset
     glyph.setTint(AndroidColor.WHITE)
     glyph.setBounds(0, 0, size, size)
@@ -427,5 +439,6 @@ private fun buildTrainSprite(ctx: Context, density: Float, fillArgb: Int, sizeDp
     glyph.setTint(fillArgb)
     glyph.setBounds(inset, inset, size - inset, size - inset)
     glyph.draw(canvas)
+    if (flip) canvas.restore()
     return BitmapDrawable(ctx.resources, bmp)
 }

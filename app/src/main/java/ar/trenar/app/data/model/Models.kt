@@ -118,6 +118,8 @@ data class EstimatedTrain(
     val fromIndex: Int,
     /** Station index it is heading to next. */
     val toIndex: Int,
+    /** True when the train is moving eastbound (+lng): used to orient the map sprite. */
+    val headingEast: Boolean = true,
 )
 
 /** Result of loading a station board. */

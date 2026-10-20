@@ -22,8 +22,14 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
-/** A live train to draw on a station mini-map. */
-data class MiniTrain(val lat: Double, val lng: Double, val colorArgb: Int, val label: String)
+/** A live train to draw on a station mini-map. [headingEast] orients the side-view sprite. */
+data class MiniTrain(
+    val lat: Double,
+    val lng: Double,
+    val colorArgb: Int,
+    val label: String,
+    val headingEast: Boolean = true,
+)
 
 /**
  * A small OpenStreetMap view centered on a station, with a pin at its location and,
@@ -79,7 +85,7 @@ fun StationMiniMap(
             }.also { mv.overlays.add(it) }
 
             trains.forEach { t ->
-                val icon = trainMarker(ctx, density, t.colorArgb)
+                val icon = trainMarker(ctx, density, t.colorArgb, t.headingEast)
                 Marker(mv).apply {
                     position = GeoPoint(t.lat, t.lng)
                     this.icon = icon
@@ -101,13 +107,17 @@ fun StationMiniMap(
     )
 }
 
-/** A side-view train sprite tinted in the line color with a white outline. */
-private fun trainMarker(ctx: Context, density: Float, fillArgb: Int): Drawable {
+/** A side-view train sprite tinted in the line color with a white outline; [flip] mirrors it. */
+private fun trainMarker(ctx: Context, density: Float, fillArgb: Int, headingEast: Boolean): Drawable {
     val size = (30f * density).toInt().coerceAtLeast(10)
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
     val glyph = ContextCompat.getDrawable(ctx, R.drawable.ic_train_side)?.mutate()
         ?: return BitmapDrawable(ctx.resources, bmp)
+    if (!headingEast) {
+        canvas.save()
+        canvas.scale(-1f, 1f, size / 2f, size / 2f)
+    }
     glyph.setTint(AndroidColor.WHITE)
     glyph.setBounds(0, 0, size, size)
     glyph.draw(canvas)
@@ -115,5 +125,6 @@ private fun trainMarker(ctx: Context, density: Float, fillArgb: Int): Drawable {
     glyph.setTint(fillArgb)
     glyph.setBounds(inset, inset, size - inset, size - inset)
     glyph.draw(canvas)
+    if (!headingEast) canvas.restore()
     return BitmapDrawable(ctx.resources, bmp)
 }

@@ -362,6 +362,7 @@ private fun ScheduleNoticeContent(
                     t.lat, t.lng,
                     LineColors.colorFor(station.line).toArgb(),
                     ctx.getString(R.string.tren_estimado_a, t.destination),
+                    headingEast = t.headingEast,
                 )
             }
             item {

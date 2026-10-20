@@ -162,6 +162,7 @@ class ScheduleCatalog(private val context: Context) {
                                 destination = destination,
                                 fromIndex = curIdx,
                                 toIndex = ns,
+                                headingEast = bLng >= aLng,
                             ),
                         )
                     }
