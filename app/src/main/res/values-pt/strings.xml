@@ -137,4 +137,19 @@
     <string name="notif_cancelado_body">%1$s (%2$s) foi cancelado.</string>
     <string name="notif_tu_estacion">sua estação</string>
     <string name="notif_anden">· plataforma %1$s</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="cerrar">Fechar</string>
+    <string name="feedback_title">Sugestões e relatos</string>
+    <string name="feedback_sub">Conte-nos uma ideia ou um problema que viu no app.</string>
+    <string name="feedback_button">Enviar sugestão ou relato</string>
+    <string name="feedback_dialog_title">Conte-nos</string>
+    <string name="feedback_type_feature">Sugestão</string>
+    <string name="feedback_type_bug">Problema</string>
+    <string name="feedback_title_label">Título</string>
+    <string name="feedback_desc_label">Descrição</string>
+    <string name="feedback_contact_label">Contato (opcional)</string>
+    <string name="feedback_send">Enviar</string>
+    <string name="feedback_sending">Enviando…</string>
+    <string name="feedback_ok">Obrigado! Recebemos sua mensagem.</string>
+    <string name="feedback_error">Não foi possível enviar. Tente de novo.</string>
 </resources>

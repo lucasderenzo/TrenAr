@@ -137,4 +137,19 @@
     <string name="notif_cancelado_body">%1$s (%2$s) was cancelled.</string>
     <string name="notif_tu_estacion">your station</string>
     <string name="notif_anden">· platform %1$s</string>
+    <string name="cancelar">Cancel</string>
+    <string name="cerrar">Close</string>
+    <string name="feedback_title">Suggestions &amp; reports</string>
+    <string name="feedback_sub">Tell us an idea or a problem you found in the app.</string>
+    <string name="feedback_button">Send a suggestion or report</string>
+    <string name="feedback_dialog_title">Tell us</string>
+    <string name="feedback_type_feature">Suggestion</string>
+    <string name="feedback_type_bug">Problem</string>
+    <string name="feedback_title_label">Title</string>
+    <string name="feedback_desc_label">Description</string>
+    <string name="feedback_contact_label">Contact (optional)</string>
+    <string name="feedback_send">Send</string>
+    <string name="feedback_sending">Sending…</string>
+    <string name="feedback_ok">Thanks! We got your message.</string>
+    <string name="feedback_error">Couldn\'t send. Please try again.</string>
 </resources>
