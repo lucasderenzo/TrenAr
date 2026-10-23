@@ -49,3 +49,5 @@ El APK queda en `app/build/outputs/apk/debug/app-debug.apk`. Requiere JDK 17 y e
 - **Desarrollo:** Claude (Opus) — Anthropic
 
 Hecho en equipo, humano + IA. 🚆
+
+> Agente autonomo probado OK.
