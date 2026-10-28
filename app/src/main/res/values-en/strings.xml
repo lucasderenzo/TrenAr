@@ -66,7 +66,8 @@
     <string name="ubicacion_manual_sub">We\'ll look for stations near that address instead of your current location.</string>
     <string name="ubicacion_manual_hint">e.g. Av. Rivadavia 1500, Buenos Aires</string>
     <string name="ubicacion_manual_no_encontrada">We couldn\'t find that address. Try another one.</string>
-    <string name="ubicacion_manual_confirmar">Search</string>
+    <string name="ubicacion_manual_confirmar">Use this address</string>
+    <string name="ubicacion_manual_mapa_hint">Type an address and we\'ll pin it on the map.</string>
 
     <string name="fav_trenes">Trains</string>
     <string name="fav_empty_title">No favorites yet</string>

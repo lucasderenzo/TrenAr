@@ -72,7 +72,8 @@
     <string name="ubicacion_manual_sub">Buscamos estaciones cerca de esa dirección en vez de tu ubicación actual.</string>
     <string name="ubicacion_manual_hint">Ej: Av. Rivadavia 1500, CABA</string>
     <string name="ubicacion_manual_no_encontrada">No encontramos esa dirección. Probá con otra.</string>
-    <string name="ubicacion_manual_confirmar">Buscar</string>
+    <string name="ubicacion_manual_confirmar">Usar esta dirección</string>
+    <string name="ubicacion_manual_mapa_hint">Escribí una dirección y te la marcamos en el mapa.</string>
 
     <!-- Favoritos -->
     <string name="fav_trenes">Trenes</string>

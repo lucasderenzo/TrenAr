@@ -78,19 +78,23 @@ fun CercanasScreen(
         }
     }
 
+    val openManualDialog = {
+        viewModel.startManualEdit()
+        showManualDialog = true
+    }
     if (showManualDialog) {
         ManualLocationDialog(
+            initialAddress = state.manualLocation?.address.orEmpty(),
+            preview = state.preview,
             geocoding = state.geocoding,
             geocodeError = state.geocodeError,
-            onConfirm = { address -> viewModel.setManualAddress(address) },
+            onAddressChange = viewModel::previewAddress,
+            onConfirm = { address -> viewModel.confirmManualAddress(address) { showManualDialog = false } },
             onDismiss = {
                 showManualDialog = false
-                viewModel.dismissGeocodeError()
+                viewModel.cancelManualEdit()
             },
         )
-        LaunchedEffect(state.manualLocation) {
-            if (state.manualLocation != null) showManualDialog = false
-        }
     }
 
     LazyColumn(
@@ -102,7 +106,7 @@ fun CercanasScreen(
                 onOpenSearch = onOpenSearch,
                 address = state.currentAddress,
                 isManualLocation = state.manualLocation != null,
-                onEditLocation = { showManualDialog = true },
+                onEditLocation = openManualDialog,
                 onUseCurrentLocation = viewModel::useCurrentLocation,
             )
         }
@@ -157,7 +161,7 @@ fun CercanasScreen(
             !permission.status.isGranted && state.manualLocation == null -> item {
                 LocationPrompt(
                     onGrant = { permission.launchPermissionRequest() },
-                    onEnterManually = { showManualDialog = true },
+                    onEnterManually = openManualDialog,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }

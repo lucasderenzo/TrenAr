@@ -10,6 +10,8 @@ import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.data.remote.NominatimClient
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -38,6 +40,8 @@ data class CercanasUiState(
     val currentAddress: String? = null,
     /** Manually entered address+coords; when set it's used instead of the GPS fix. */
     val manualLocation: ManualLocation? = null,
+    /** Where the address being typed in the manual-location dialog resolves to (shown as a pin). */
+    val preview: ManualLocation? = null,
     /** True while resolving a manually typed address to coordinates. */
     val geocoding: Boolean = false,
     /** True when the last manual address couldn't be resolved to a location. */
@@ -54,6 +58,7 @@ class CercanasViewModel : ViewModel() {
     val state = _state.asStateFlow()
 
     private var lastLoc: Location? = null
+    private var previewJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -94,29 +99,69 @@ class CercanasViewModel : ViewModel() {
         viewModelScope.launch { prefs.toggleBikeFavorite(id) }
     }
 
-    /** Resolves a manually typed address and, on success, uses it instead of the GPS fix. */
-    fun setManualAddress(address: String) {
-        val query = address.trim()
-        if (query.isEmpty()) return
-        viewModelScope.launch {
+    /** The manual-location dialog opened: start from the address in use, if any. */
+    fun startManualEdit() {
+        previewJob?.cancel()
+        _state.update { it.copy(preview = it.manualLocation, geocoding = false, geocodeError = false) }
+    }
+
+    /** The user is typing an address: once they pause, resolve it and show it as a pin. */
+    fun previewAddress(text: String) {
+        previewJob?.cancel()
+        val query = text.trim()
+        if (query.length < 4) {
+            _state.update { it.copy(preview = null, geocoding = false, geocodeError = false) }
+            return
+        }
+        if (_state.value.preview?.address == query) return
+        previewJob = viewModelScope.launch {
+            // Wait for a pause in typing; this also keeps Nominatim under its 1 request/s policy.
+            delay(900)
             _state.update { it.copy(geocoding = true, geocodeError = false) }
             val coords = geocodeAddress(query)
-            if (coords == null) {
-                _state.update { it.copy(geocoding = false, geocodeError = true) }
+            _state.update {
+                it.copy(
+                    geocoding = false,
+                    geocodeError = coords == null,
+                    preview = coords?.let { (lat, lng) -> ManualLocation(lat, lng, query) },
+                )
+            }
+        }
+    }
+
+    /** Uses the typed address instead of the GPS fix; [onSaved] runs once it's resolved and stored. */
+    fun confirmManualAddress(text: String, onSaved: () -> Unit) {
+        val query = text.trim()
+        if (query.isEmpty()) return
+        previewJob?.cancel()
+        viewModelScope.launch {
+            val manual = _state.value.preview?.takeIf { it.address == query } ?: run {
+                _state.update { it.copy(geocoding = true, geocodeError = false) }
+                geocodeAddress(query)?.let { (lat, lng) -> ManualLocation(lat, lng, query) }
+            }
+            if (manual == null) {
+                _state.update { it.copy(geocoding = false, geocodeError = true, preview = null) }
                 return@launch
             }
-            val manual = ManualLocation(coords.first, coords.second, query)
             prefs.setManualLocation(manual.lat, manual.lng, manual.address)
             _state.update {
                 it.copy(
                     geocoding = false,
                     geocodeError = false,
+                    preview = null,
                     manualLocation = manual,
                     currentAddress = manual.address,
                 )
             }
+            onSaved()
             load(_state.value.mode, force = true)
         }
+    }
+
+    /** The manual-location dialog was dismissed without confirming. */
+    fun cancelManualEdit() {
+        previewJob?.cancel()
+        _state.update { it.copy(preview = null, geocoding = false, geocodeError = false) }
     }
 
     /** Drops the manual address and goes back to using the device's real GPS location. */
@@ -125,10 +170,6 @@ class CercanasViewModel : ViewModel() {
         viewModelScope.launch { prefs.clearManualLocation() }
         _state.update { it.copy(manualLocation = null, currentAddress = null) }
         load(_state.value.mode, force = true)
-    }
-
-    fun dismissGeocodeError() {
-        _state.update { it.copy(geocodeError = false) }
     }
 
     /** Best-effort reverse geocode to a "street number" string; null when unavailable/offline. */
