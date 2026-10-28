@@ -59,6 +59,14 @@
     <string name="encontra_cerca_title">Encontre o que está perto</string>
     <string name="encontra_cerca_sub">Com sua localização mostramos as estações de trem e Ecobici mais próximas.</string>
     <string name="usar_ubicacion">Usar minha localização</string>
+    <string name="ingresar_direccion">Digitar endereço</string>
+    <string name="cambiar_ubicacion">Alterar localização</string>
+    <string name="ubicacion_manual_activa">Localização manual</string>
+    <string name="ubicacion_manual_title">Digite um endereço</string>
+    <string name="ubicacion_manual_sub">Vamos buscar estações perto desse endereço em vez da sua localização atual.</string>
+    <string name="ubicacion_manual_hint">Ex: Av. Rivadavia 1500, Buenos Aires</string>
+    <string name="ubicacion_manual_no_encontrada">Não encontramos esse endereço. Tente outro.</string>
+    <string name="ubicacion_manual_confirmar">Buscar</string>
 
     <string name="fav_trenes">Trens</string>
     <string name="fav_empty_title">Você ainda não tem favoritas</string>

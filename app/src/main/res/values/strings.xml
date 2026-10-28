@@ -65,6 +65,14 @@
     <string name="encontra_cerca_title">Encontrá lo que tenés cerca</string>
     <string name="encontra_cerca_sub">Con tu ubicación te mostramos las estaciones de tren y las de Ecobici más próximas.</string>
     <string name="usar_ubicacion">Usar mi ubicación</string>
+    <string name="ingresar_direccion">Ingresar dirección</string>
+    <string name="cambiar_ubicacion">Cambiar ubicación</string>
+    <string name="ubicacion_manual_activa">Ubicación manual</string>
+    <string name="ubicacion_manual_title">Ingresá una dirección</string>
+    <string name="ubicacion_manual_sub">Buscamos estaciones cerca de esa dirección en vez de tu ubicación actual.</string>
+    <string name="ubicacion_manual_hint">Ej: Av. Rivadavia 1500, CABA</string>
+    <string name="ubicacion_manual_no_encontrada">No encontramos esa dirección. Probá con otra.</string>
+    <string name="ubicacion_manual_confirmar">Buscar</string>
 
     <!-- Favoritos -->
     <string name="fav_trenes">Trenes</string>

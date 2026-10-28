@@ -5,6 +5,7 @@ import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.trenar.app.data.model.BikeNearby
+import ar.trenar.app.data.model.ManualLocation
 import ar.trenar.app.data.model.StationWithNext
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,12 @@ data class CercanasUiState(
     val bikeFavorites: Set<String> = emptySet(),
     /** User's current street address (reverse-geocoded), e.g. "Tres Arroyos 660". */
     val currentAddress: String? = null,
+    /** Manually entered address+coords; when set it's used instead of the GPS fix. */
+    val manualLocation: ManualLocation? = null,
+    /** True while resolving a manually typed address to coordinates. */
+    val geocoding: Boolean = false,
+    /** True when the last manual address couldn't be resolved to a location. */
+    val geocodeError: Boolean = false,
 )
 
 class CercanasViewModel : ViewModel() {
@@ -47,6 +54,13 @@ class CercanasViewModel : ViewModel() {
         }
         viewModelScope.launch {
             prefs.bikeFavorites.collect { f -> _state.update { it.copy(bikeFavorites = f) } }
+        }
+        viewModelScope.launch {
+            val manual = prefs.manualLocationNow()
+            if (manual != null) {
+                _state.update { it.copy(manualLocation = manual, currentAddress = manual.address) }
+                load(_state.value.mode, force = true)
+            }
         }
     }
 
@@ -73,6 +87,43 @@ class CercanasViewModel : ViewModel() {
         viewModelScope.launch { prefs.toggleBikeFavorite(id) }
     }
 
+    /** Resolves a manually typed address and, on success, uses it instead of the GPS fix. */
+    fun setManualAddress(address: String) {
+        val query = address.trim()
+        if (query.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(geocoding = true, geocodeError = false) }
+            val coords = geocodeAddress(query)
+            if (coords == null) {
+                _state.update { it.copy(geocoding = false, geocodeError = true) }
+                return@launch
+            }
+            val manual = ManualLocation(coords.first, coords.second, query)
+            prefs.setManualLocation(manual.lat, manual.lng, manual.address)
+            _state.update {
+                it.copy(
+                    geocoding = false,
+                    geocodeError = false,
+                    manualLocation = manual,
+                    currentAddress = manual.address,
+                )
+            }
+            load(_state.value.mode, force = true)
+        }
+    }
+
+    /** Drops the manual address and goes back to using the device's real GPS location. */
+    fun useCurrentLocation() {
+        lastLoc = null
+        viewModelScope.launch { prefs.clearManualLocation() }
+        _state.update { it.copy(manualLocation = null, currentAddress = null) }
+        load(_state.value.mode, force = true)
+    }
+
+    fun dismissGeocodeError() {
+        _state.update { it.copy(geocodeError = false) }
+    }
+
     /** Best-effort reverse geocode to a "street number" string; null when unavailable/offline. */
     private suspend fun reverseGeocode(loc: Location): String? = withContext(Dispatchers.IO) {
         runCatching {
@@ -92,55 +143,77 @@ class CercanasViewModel : ViewModel() {
         }.getOrNull()
     }
 
+    /** Best-effort forward geocode of a typed address to lat/lng; null when not found/offline. */
+    private suspend fun geocodeAddress(query: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
+        runCatching {
+            if (!Geocoder.isPresent()) return@withContext null
+            val geocoder = Geocoder(ServiceLocator.appContext, Locale.getDefault())
+            @Suppress("DEPRECATION")
+            val results = geocoder.getFromLocationName(query, 1)
+            val a = results?.firstOrNull() ?: return@withContext null
+            a.latitude to a.longitude
+        }.getOrNull()
+    }
+
     private fun load(mode: CercanasMode, force: Boolean) {
         viewModelScope.launch {
+            val manual = _state.value.manualLocation
+            if (manual != null) {
+                _state.update { it.copy(loading = true, locationDenied = false, locationUnavailable = false) }
+                fetchNearby(mode, manual.lat, manual.lng)
+                return@launch
+            }
             if (!location.hasPermission()) {
                 _state.update { it.copy(locationDenied = true, loading = false) }
                 return@launch
             }
             _state.update { it.copy(loading = true, locationDenied = false, locationUnavailable = false) }
-            try {
-                val loc = (if (force) null else lastLoc) ?: location.current()?.also { lastLoc = it }
-                if (loc == null) {
-                    _state.update { it.copy(loading = false, locationUnavailable = true) }
-                    return@launch
-                }
-                if (force || _state.value.currentAddress == null) {
-                    viewModelScope.launch {
-                        val addr = reverseGeocode(loc)
-                        if (addr != null) _state.update { it.copy(currentAddress = addr) }
-                    }
-                }
-                val radius = _state.value.radiusMeters
-                val noRadius = radius == Int.MAX_VALUE
-                when (mode) {
-                    CercanasMode.TREN -> {
-                        // "Sin radio" lists every station; otherwise all within the radius.
-                        val listCap = if (noRadius) 400 else 30
-                        val near = repo.nearestStationsInRadius(loc.latitude, loc.longitude, radius, cap = listCap)
-                        // fetch live arrivals only for the nearest few; the rest are plain rows.
-                        val arrivalsCount = 15
-                        _state.update {
-                            it.copy(
-                                items = near.mapIndexed { i, s -> StationWithNext(s, null, loading = i < arrivalsCount) },
-                                loading = false,
-                            )
-                        }
-                        val enriched = repo.withNextArrivals(near.take(arrivalsCount))
-                        if (_state.value.mode == CercanasMode.TREN) {
-                            val merged = enriched + near.drop(arrivalsCount).map { StationWithNext(it, null) }
-                            _state.update { it.copy(items = merged) }
-                        }
-                    }
-                    CercanasMode.ECOBICI -> {
-                        val bikes = repo.nearestBikes(loc.latitude, loc.longitude, radius, limit = if (noRadius) 400 else 20)
-                        _state.update { it.copy(bikeItems = bikes, loading = false) }
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("TrenCercanas", "load failed", e)
+            val loc = (if (force) null else lastLoc) ?: location.current()?.also { lastLoc = it }
+            if (loc == null) {
                 _state.update { it.copy(loading = false, locationUnavailable = true) }
+                return@launch
             }
+            if (force || _state.value.currentAddress == null) {
+                viewModelScope.launch {
+                    val addr = reverseGeocode(loc)
+                    if (addr != null) _state.update { it.copy(currentAddress = addr) }
+                }
+            }
+            fetchNearby(mode, loc.latitude, loc.longitude)
+        }
+    }
+
+    private suspend fun fetchNearby(mode: CercanasMode, lat: Double, lng: Double) {
+        try {
+            val radius = _state.value.radiusMeters
+            val noRadius = radius == Int.MAX_VALUE
+            when (mode) {
+                CercanasMode.TREN -> {
+                    // "Sin radio" lists every station; otherwise all within the radius.
+                    val listCap = if (noRadius) 400 else 30
+                    val near = repo.nearestStationsInRadius(lat, lng, radius, cap = listCap)
+                    // fetch live arrivals only for the nearest few; the rest are plain rows.
+                    val arrivalsCount = 15
+                    _state.update {
+                        it.copy(
+                            items = near.mapIndexed { i, s -> StationWithNext(s, null, loading = i < arrivalsCount) },
+                            loading = false,
+                        )
+                    }
+                    val enriched = repo.withNextArrivals(near.take(arrivalsCount))
+                    if (_state.value.mode == CercanasMode.TREN) {
+                        val merged = enriched + near.drop(arrivalsCount).map { StationWithNext(it, null) }
+                        _state.update { it.copy(items = merged) }
+                    }
+                }
+                CercanasMode.ECOBICI -> {
+                    val bikes = repo.nearestBikes(lat, lng, radius, limit = if (noRadius) 400 else 20)
+                    _state.update { it.copy(bikeItems = bikes, loading = false) }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TrenCercanas", "load failed", e)
+            _state.update { it.copy(loading = false, locationUnavailable = true) }
         }
     }
 }

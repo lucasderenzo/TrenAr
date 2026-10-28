@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Train
@@ -27,10 +29,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +66,7 @@ fun CercanasScreen(
     val ctx = LocalContext.current
     val permission = rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION)
     var nowSec by remember { mutableLongStateOf(System.currentTimeMillis() / 1000) }
+    var showManualDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(permission.status.isGranted) {
         if (permission.status.isGranted) viewModel.refresh()
@@ -72,11 +77,34 @@ fun CercanasScreen(
         }
     }
 
+    if (showManualDialog) {
+        ManualLocationDialog(
+            geocoding = state.geocoding,
+            geocodeError = state.geocodeError,
+            onConfirm = { address -> viewModel.setManualAddress(address) },
+            onDismiss = {
+                showManualDialog = false
+                viewModel.dismissGeocodeError()
+            },
+        )
+        LaunchedEffect(state.manualLocation) {
+            if (state.manualLocation != null) showManualDialog = false
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { CercanasHeader(onOpenSearch, state.currentAddress) }
+        item {
+            CercanasHeader(
+                onOpenSearch = onOpenSearch,
+                address = state.currentAddress,
+                isManualLocation = state.manualLocation != null,
+                onEditLocation = { showManualDialog = true },
+                onUseCurrentLocation = viewModel::useCurrentLocation,
+            )
+        }
         item {
             Row(
                 Modifier.padding(horizontal = 16.dp),
@@ -125,9 +153,10 @@ fun CercanasScreen(
         val empty = if (tren) state.items.isEmpty() else state.bikeItems.isEmpty()
 
         when {
-            !permission.status.isGranted -> item {
+            !permission.status.isGranted && state.manualLocation == null -> item {
                 LocationPrompt(
                     onGrant = { permission.launchPermissionRequest() },
+                    onEnterManually = { showManualDialog = true },
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
@@ -174,7 +203,13 @@ fun CercanasScreen(
 }
 
 @Composable
-private fun CercanasHeader(onOpenSearch: () -> Unit, address: String?) {
+private fun CercanasHeader(
+    onOpenSearch: () -> Unit,
+    address: String?,
+    isManualLocation: Boolean,
+    onEditLocation: () -> Unit,
+    onUseCurrentLocation: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -208,14 +243,42 @@ private fun CercanasHeader(onOpenSearch: () -> Unit, address: String?) {
                     address,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
+                IconButton(onClick = onEditLocation, modifier = Modifier.size(28.dp)) {
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.cambiar_ubicacion),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(16.dp),
+                    )
+                }
+            }
+        }
+        if (isManualLocation) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.ubicacion_manual_activa),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onUseCurrentLocation) {
+                    Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.width(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.usar_ubicacion))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun LocationPrompt(onGrant: () -> Unit, modifier: Modifier = Modifier) {
+private fun LocationPrompt(
+    onGrant: () -> Unit,
+    onEnterManually: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         shape = RoundedCornerShape(18.dp),
@@ -233,10 +296,17 @@ private fun LocationPrompt(onGrant: () -> Unit, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            Button(onClick = onGrant) {
-                Icon(Icons.Filled.LocationOn, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.usar_ubicacion))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onGrant) {
+                    Icon(Icons.Filled.LocationOn, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.usar_ubicacion))
+                }
+                TextButton(onClick = onEnterManually) {
+                    Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.width(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.ingresar_direccion))
+                }
             }
         }
     }
