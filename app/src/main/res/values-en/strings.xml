@@ -95,8 +95,11 @@
     <string name="todos">All</string>
     <string name="anden">Platform %1$s</string>
     <string name="sale_hora">departs %1$s</string>
-    <string name="sin_proximos_title">No upcoming trains</string>
-    <string name="sin_proximos_sub">There may be no service at this time. Try later.</string>
+    <string name="sin_proximos_title">No arrivals reported</string>
+    <string name="sin_proximos_sub">This station isn\'t reporting upcoming arrivals yet. You may see trains approaching on the map: they show up here once the system assigns them an arrival time.</string>
+    <string name="sin_arribos_filtro_title">No arrivals to %1$s</string>
+    <string name="sin_arribos_filtro_sub">There are arrivals reported to other destinations.</string>
+    <string name="ver_todos">Show all</string>
     <string name="error_sin_conexion">No internet connection.</string>
     <string name="error_timeout">The service took too long to respond.</string>
     <string name="error_generico">We couldn\'t get the arrivals. Try again.</string>
