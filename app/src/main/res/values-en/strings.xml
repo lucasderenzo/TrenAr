@@ -59,6 +59,15 @@
     <string name="encontra_cerca_title">Find what\'s near you</string>
     <string name="encontra_cerca_sub">With your location we show the nearest train and Ecobici stations.</string>
     <string name="usar_ubicacion">Use my location</string>
+    <string name="ingresar_direccion">Enter address</string>
+    <string name="cambiar_ubicacion">Change location</string>
+    <string name="ubicacion_manual_activa">Manual location</string>
+    <string name="ubicacion_manual_title">Enter an address</string>
+    <string name="ubicacion_manual_sub">We\'ll look for stations near that address instead of your current location.</string>
+    <string name="ubicacion_manual_hint">e.g. Av. Rivadavia 1500, Buenos Aires</string>
+    <string name="ubicacion_manual_no_encontrada">We couldn\'t find that address. Try another one.</string>
+    <string name="ubicacion_manual_confirmar">Use this address</string>
+    <string name="ubicacion_manual_mapa_hint">Type an address and we\'ll pin it on the map.</string>
 
     <string name="fav_trenes">Trains</string>
     <string name="fav_empty_title">No favorites yet</string>

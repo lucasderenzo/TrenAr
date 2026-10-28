@@ -20,6 +20,13 @@ data class StationWithNext(
     val loading: Boolean = false,
 )
 
+/** A manually entered location (geocoded address) used instead of the GPS fix in Cercanas. */
+data class ManualLocation(
+    val lat: Double,
+    val lng: Double,
+    val address: String,
+)
+
 /** A service alert from a line (gerencia). */
 data class ServiceAlert(
     val line: String,
