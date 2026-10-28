@@ -64,6 +64,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.R
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
+import ar.trenar.app.data.model.EstimatedTrain
+import ar.trenar.app.data.model.StationRef
 import ar.trenar.app.data.model.ScheduledDeparture
 import ar.trenar.app.ui.common.CountdownRing
 import ar.trenar.app.ui.common.DelayBadge
@@ -102,7 +104,7 @@ fun BoardScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(20_000)
-            viewModel.load(initial = false)
+            viewModel.load(initial = false, auto = true)
         }
     }
 
@@ -192,19 +194,25 @@ private fun BoardContent(
             nowSec = nowSec,
             walkSeconds = state.walkSeconds,
             distanceMeters = state.distanceMeters,
+            lineStations = state.lineStations,
+            lineEstimated = state.lineEstimated,
         )
         return
     }
 
     val ctx = LocalContext.current
-    val miniTrains = remember(board.arrivals) {
+    val miniTrains = remember(board.arrivals, state.lineStations) {
         if (station == null) emptyList()
-        else board.arrivals.mapNotNull { a ->
-            val lat = a.trainLat
-            val lng = a.trainLng
-            if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) null
-            else MiniTrain(lat, lng, LineColors.colorFor(a.line).toArgb(), ctx.getString(R.string.tren_a, a.destination))
-        }.distinctBy { it.lat to it.lng }
+        else board.arrivals.mapNotNull { it.toMiniTrain(ctx, state.lineStations) }.distinctBy { it.lat to it.lng }
+    }
+    // The rest of the line's trains: drawn when zooming out, but kept out of the initial auto-zoom.
+    val lineMiniTrains = remember(board.arrivals, state.lineTrains, state.lineStations) {
+        val here = board.arrivals.map { it.serviceId }.toSet()
+        state.lineTrains
+            .filter { it.serviceId !in here }
+            .mapNotNull { it.toMiniTrain(ctx, state.lineStations) }
+            .filter { t -> miniTrains.none { it.lat == t.lat && it.lng == t.lng } }
+            .distinctBy { it.lat to it.lng }
     }
 
     LazyColumn(
@@ -255,6 +263,9 @@ private fun BoardContent(
                                 label = station.name,
                                 modifier = Modifier.fillMaxSize(),
                                 trains = miniTrains,
+                                lineStations = state.lineStations,
+                                lineColorArgb = LineColors.colorFor(station.line).toArgb(),
+                                extraTrains = lineMiniTrains,
                             )
                         }
                         if (miniTrains.isEmpty()) {
@@ -335,6 +346,8 @@ private fun ScheduleNoticeContent(
     nowSec: Long,
     walkSeconds: Int?,
     distanceMeters: Double?,
+    lineStations: List<StationRef>,
+    lineEstimated: List<EstimatedTrain>,
 ) {
     val ctx = LocalContext.current
     val station = board.station
@@ -375,14 +388,15 @@ private fun ScheduleNoticeContent(
             }
         }
         if (station != null) {
-            val estTrains = board.estimatedTrains.map { t ->
-                MiniTrain(
-                    t.lat, t.lng,
-                    LineColors.colorFor(station.line).toArgb(),
-                    ctx.getString(R.string.tren_estimado_a, t.destination),
-                    headingEast = t.headingEast,
-                )
+            val lineArgb = LineColors.colorFor(station.line).toArgb()
+            val toMini = { t: EstimatedTrain ->
+                MiniTrain(t.lat, t.lng, lineArgb, ctx.getString(R.string.tren_estimado_a, t.destination), t.headingEast)
             }
+            // Nearby trains drive the auto-zoom; the rest of the line shows up when zooming out.
+            val estTrains = board.estimatedTrains.map(toMini)
+            val lineEstTrains = lineEstimated
+                .filter { t -> board.estimatedTrains.none { it.lat == t.lat && it.lng == t.lng } }
+                .map(toMini)
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -396,6 +410,9 @@ private fun ScheduleNoticeContent(
                             label = station.name,
                             modifier = Modifier.fillMaxSize(),
                             trains = estTrains,
+                            lineStations = lineStations,
+                            lineColorArgb = lineArgb,
+                            extraTrains = lineEstTrains,
                         )
                     }
                 }
@@ -710,4 +727,21 @@ private fun ArrivalCard(arrival: Arrival, nowSec: Long) {
             DelayBadge(status = status, delayMinutes = arrival.delayMinutes())
         }
     }
+}
+
+/**
+ * A live arrival as a mini-map train, or null without a GPS fix. Oriented like "Red en vivo": by
+ * where its destination terminal sits relative to the train.
+ */
+private fun Arrival.toMiniTrain(ctx: android.content.Context, lineStations: List<StationRef>): MiniTrain? {
+    val lat = trainLat ?: return null
+    val lng = trainLng ?: return null
+    if (lat == 0.0 && lng == 0.0) return null
+    val destLng = lineStations.firstOrNull { it.name == destination }?.lng
+    return MiniTrain(
+        lat, lng,
+        LineColors.colorFor(line).toArgb(),
+        ctx.getString(R.string.tren_a, destination),
+        headingEast = destLng?.let { it >= lng } ?: true,
+    )
 }

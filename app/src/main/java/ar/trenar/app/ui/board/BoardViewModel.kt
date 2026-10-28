@@ -6,6 +6,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
+import ar.trenar.app.data.model.EstimatedTrain
+import ar.trenar.app.data.model.StationRef
+import ar.trenar.app.data.LineInfo
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.notifications.TrainTrackService
 import ar.trenar.app.util.Geo
@@ -24,6 +27,12 @@ data class BoardUiState(
     val walkSeconds: Int? = null,
     val distanceMeters: Double? = null,
     val filterDestination: String? = null,
+    /** Every station of this station's line, drawn on the mini-map (like "Red en vivo"). */
+    val lineStations: List<StationRef> = emptyList(),
+    /** Live trains on the whole line (realtime lines), for the mini-map when zoomed out. */
+    val lineTrains: List<Arrival> = emptyList(),
+    /** Schedule-estimated trains on the whole line (no-realtime lines). */
+    val lineEstimated: List<EstimatedTrain> = emptyList(),
 ) {
     val destinations: List<String>
         get() = board?.arrivals?.map { it.destination }?.distinct()?.sorted() ?: emptyList()
@@ -41,6 +50,7 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
     private val prefs = ServiceLocator.prefs
 
     private val _state = MutableStateFlow(BoardUiState())
+    private var lineTrainsLoadedAt = 0L
     val state = _state.asStateFlow()
 
     init {
@@ -80,7 +90,8 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
         }
     }
 
-    fun load(initial: Boolean = false) {
+    /** [auto] marks the periodic resync, which refreshes the whole-line trains less often. */
+    fun load(initial: Boolean = false, auto: Boolean = false) {
         viewModelScope.launch {
             _state.update {
                 it.copy(loading = initial && it.board == null, refreshing = !initial, error = null)
@@ -88,11 +99,36 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
             try {
                 val board = repo.board(stationId, cantidad = 24)
                 _state.update { it.copy(loading = false, refreshing = false, board = board, error = null) }
+                board.station?.line?.takeIf { it.isNotBlank() }?.let { loadLine(it, force = !initial && !auto) }
             } catch (e: Exception) {
                 android.util.Log.e("TrenBoard", "board load failed: ${e.javaClass.simpleName}: ${e.message}", e)
                 _state.update {
                     it.copy(loading = false, refreshing = false, error = friendly(e))
                 }
+            }
+        }
+    }
+
+    /**
+     * Loads the rest of the line for the mini-map, in the background so the board isn't delayed.
+     * Live trains of the whole line take several requests, so they're refreshed at most once a
+     * minute by the periodic resync (or on a manual refresh).
+     */
+    private fun loadLine(line: String, force: Boolean) {
+        viewModelScope.launch {
+            if (_state.value.lineStations.isEmpty()) {
+                val stations = runCatching { repo.stationsOfLine(line) }.getOrDefault(emptyList())
+                _state.update { it.copy(lineStations = stations) }
+            }
+            val now = System.currentTimeMillis() / 1000
+            if (!force && now - lineTrainsLoadedAt < LINE_TRAINS_MIN_INTERVAL_SEC) return@launch
+            lineTrainsLoadedAt = now
+            if (LineInfo.hasRealtime(line)) {
+                val trains = runCatching { repo.liveTrains(line) }.getOrNull() ?: return@launch
+                _state.update { it.copy(lineTrains = trains) }
+            } else {
+                val est = runCatching { repo.estimatedTrains(line) }.getOrDefault(emptyList())
+                _state.update { it.copy(lineEstimated = est) }
             }
         }
     }
@@ -118,6 +154,8 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
     }
 
     companion object {
+        private const val LINE_TRAINS_MIN_INTERVAL_SEC = 60L
+
         fun factory(stationId: Int) = viewModelFactory {
             initializer { BoardViewModel(stationId) }
         }
