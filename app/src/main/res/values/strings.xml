@@ -105,8 +105,11 @@
     <string name="todos">Todos</string>
     <string name="anden">Andén %1$s</string>
     <string name="sale_hora">sale %1$s</string>
-    <string name="sin_proximos_title">Sin próximos trenes</string>
-    <string name="sin_proximos_sub">Puede que no haya servicio en este horario. Probá más tarde.</string>
+    <string name="sin_proximos_title">Sin arribos informados</string>
+    <string name="sin_proximos_sub">Esta estación todavía no informa próximos arribos. Puede que no haya servicio en este horario, o que veas trenes en el mapa acercándose: aparecen acá cuando el sistema les asigna horario de llegada.</string>
+    <string name="sin_arribos_filtro_title">Sin arribos hacia %1$s</string>
+    <string name="sin_arribos_filtro_sub">Hay arribos informados hacia otros destinos.</string>
+    <string name="ver_todos">Ver todos</string>
     <string name="error_sin_conexion">Sin conexión a internet.</string>
     <string name="error_timeout">El servicio tardó demasiado en responder.</string>
     <string name="error_generico">No pudimos obtener los arribos. Probá de nuevo.</string>

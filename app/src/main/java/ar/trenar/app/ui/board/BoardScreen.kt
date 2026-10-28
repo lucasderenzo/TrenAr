@@ -294,11 +294,29 @@ private fun BoardContent(
 
         if (arrivals.isEmpty()) {
             item {
-                EmptyState(
-                    icon = Icons.Outlined.Train,
-                    title = stringResource(R.string.sin_proximos_title),
-                    subtitle = stringResource(R.string.sin_proximos_sub),
-                )
+                // Arrivals come from this station's own endpoint, while the live map
+                // aggregates positions reported by other stations of the line. A train
+                // can be on the map before the API assigns it an ETA here, so the empty
+                // state says "no informed arrivals" instead of "no trains".
+                val filter = state.filterDestination
+                val clearFilter = filter?.let { stringResource(R.string.ver_todos) }
+                if (filter != null && board.arrivals.isNotEmpty()) {
+                    EmptyState(
+                        icon = Icons.Outlined.Train,
+                        title = stringResource(R.string.sin_arribos_filtro_title, filter),
+                        subtitle = stringResource(R.string.sin_arribos_filtro_sub),
+                        actionLabel = clearFilter,
+                        onAction = { onFilter(null) },
+                    )
+                } else {
+                    EmptyState(
+                        icon = Icons.Outlined.Train,
+                        title = stringResource(R.string.sin_proximos_title),
+                        subtitle = stringResource(R.string.sin_proximos_sub),
+                        actionLabel = clearFilter,
+                        onAction = { onFilter(null) },
+                    )
+                }
             }
         } else {
             items(arrivals, key = { it.serviceId + it.destination }) { arrival ->
