@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import ar.trenar.app.data.model.BikeNearby
 import ar.trenar.app.data.model.ManualLocation
 import ar.trenar.app.data.model.StationWithNext
+import ar.trenar.app.data.remote.NominatimClient
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,12 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 enum class CercanasMode { TREN, ECOBICI }
+
+// Bounding box of the train network (stations.json spans Chascomús–Zárate, Junín–La Plata) plus a margin.
+private const val AREA_SOUTH = -35.8
+private const val AREA_NORTH = -33.9
+private const val AREA_WEST = -61.2
+private const val AREA_EAST = -57.7
 
 data class CercanasUiState(
     val mode: CercanasMode = CercanasMode.TREN,
@@ -143,14 +150,26 @@ class CercanasViewModel : ViewModel() {
         }.getOrNull()
     }
 
-    /** Best-effort forward geocode of a typed address to lat/lng; null when not found/offline. */
-    private suspend fun geocodeAddress(query: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
+    /**
+     * Best-effort forward geocode of a typed address to lat/lng; null when not found/offline.
+     * Restricted to the area the train network covers, so "Tres Arroyos 660" resolves to the
+     * street in CABA and not to the city of Tres Arroyos. Tries the platform Geocoder first and
+     * falls back to OpenStreetMap's Nominatim (devices without Google services, emulators).
+     */
+    private suspend fun geocodeAddress(query: String): Pair<Double, Double>? =
+        platformGeocode(query)
+            ?: NominatimClient.search(query, AREA_SOUTH, AREA_WEST, AREA_NORTH, AREA_EAST)
+
+    private suspend fun platformGeocode(query: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
         runCatching {
             if (!Geocoder.isPresent()) return@withContext null
             val geocoder = Geocoder(ServiceLocator.appContext, Locale.getDefault())
             @Suppress("DEPRECATION")
-            val results = geocoder.getFromLocationName(query, 1)
-            val a = results?.firstOrNull() ?: return@withContext null
+            val results = geocoder.getFromLocationName(
+                query, 5, AREA_SOUTH, AREA_WEST, AREA_NORTH, AREA_EAST,
+            )
+            val a = results?.firstOrNull { it.latitude in AREA_SOUTH..AREA_NORTH && it.longitude in AREA_WEST..AREA_EAST }
+                ?: return@withContext null
             a.latitude to a.longitude
         }.getOrNull()
     }
@@ -168,7 +187,12 @@ class CercanasViewModel : ViewModel() {
                 return@launch
             }
             _state.update { it.copy(loading = true, locationDenied = false, locationUnavailable = false) }
-            val loc = (if (force) null else lastLoc) ?: location.current()?.also { lastLoc = it }
+            val loc = (if (force) null else lastLoc)
+                ?: runCatching { location.current() }
+                    .onFailure { android.util.Log.e("TrenCercanas", "location failed", it) }
+                    .getOrNull()?.also { lastLoc = it }
+            // A manual location may have been set (or restored from prefs) while waiting for the GPS fix.
+            if (_state.value.manualLocation != null) return@launch
             if (loc == null) {
                 _state.update { it.copy(loading = false, locationUnavailable = true) }
                 return@launch
@@ -176,7 +200,9 @@ class CercanasViewModel : ViewModel() {
             if (force || _state.value.currentAddress == null) {
                 viewModelScope.launch {
                     val addr = reverseGeocode(loc)
-                    if (addr != null) _state.update { it.copy(currentAddress = addr) }
+                    if (addr != null && _state.value.manualLocation == null) {
+                        _state.update { it.copy(currentAddress = addr) }
+                    }
                 }
             }
             fetchNearby(mode, loc.latitude, loc.longitude)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -250,9 +251,16 @@ private fun CercanasHeader(
                         Icons.Filled.Edit,
                         contentDescription = stringResource(R.string.cambiar_ubicacion),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(16.dp),
+                        modifier = Modifier.size(16.dp),
                     )
                 }
+            }
+        } else {
+            // No address (GPS fix or reverse geocode unavailable): still offer typing one.
+            TextButton(onClick = onEditLocation, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.ingresar_direccion))
             }
         }
         if (isManualLocation) {
