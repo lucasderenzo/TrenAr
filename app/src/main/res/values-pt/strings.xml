@@ -132,6 +132,11 @@
     <string name="idioma_title">Idioma</string>
     <string name="idioma_sub">Escolha o idioma do app.</string>
     <string name="idioma_auto">Automático</string>
+    <string name="tema_title">Tema</string>
+    <string name="tema_sub">Escolha se o app segue o modo do sistema ou usa sempre o tema claro ou escuro.</string>
+    <string name="tema_sistema">Sistema</string>
+    <string name="tema_claro">Claro</string>
+    <string name="tema_oscuro">Escuro</string>
     <string name="creditos">Créditos</string>
     <string name="credito_idea">Ideia e direção: Lucas De Renzo</string>
     <string name="credito_dev">Desenvolvimento: Claude (Opus) — Anthropic</string>

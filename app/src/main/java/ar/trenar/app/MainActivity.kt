@@ -13,11 +13,12 @@ import androidx.core.content.ContextCompat
 import ar.trenar.app.ui.nav.TrenRoot
 import ar.trenar.app.ui.theme.TrenTheme
 import ar.trenar.app.util.LocaleHelper
+import ar.trenar.app.util.ThemeHelper
 
 class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleHelper.wrap(newBase))
+        super.attachBaseContext(ThemeHelper.wrap(LocaleHelper.wrap(newBase)))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
