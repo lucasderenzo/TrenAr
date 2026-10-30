@@ -130,15 +130,19 @@ fun StationMiniMap(
 
             mv.overlays.clear()
             stops.clear()
+            val terminalTag = ctx.getString(R.string.est_terminal)
             val focusedId = lineStations.firstOrNull { it.lat == lat && it.lng == lng }?.id
             lineStations.forEach { st ->
                 val focused = st.id == focusedId
                 val terminal = LineTerminals.isTerminal(st.line, st.name)
+                // terminals: double-size circle, and "Est. Terminal" above the name when it fits
+                val sizeDp = if (terminal) 28f else 14f
                 val plain = buildStationMarker(
-                    ctx, density, lineColorArgb, 14f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
+                    ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
                 )
                 val labeled = buildStationMarker(
-                    ctx, density, lineColorArgb, 14f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, st.name,
+                    ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, st.name,
+                    if (terminal) terminalTag else null,
                 )
                 val point = GeoPoint(st.lat, st.lng)
                 val marker = Marker(mv).apply {

@@ -68,8 +68,10 @@ private fun drawCircleGlyph(
 }
 
 /**
- * A circular station marker; when [label] is set (terminal stations), the name is drawn in bold
- * underneath the circle with a white halo so it stays readable over the map tiles.
+ * A circular station marker; when [label] is set, the name is drawn in bold underneath the circle
+ * and, when [topLabel] is set (terminal stations, e.g. "Est. Terminal"), that text is drawn above
+ * it. Both texts get a white halo so they stay readable over the map tiles. The returned
+ * [MarkerArt.anchorY] keeps the circle's center on the geo point regardless of the extra text.
  */
 fun buildStationMarker(
     ctx: Context,
@@ -80,10 +82,11 @@ fun buildStationMarker(
     ringWidthDp: Float,
     glyphRes: Int,
     label: String?,
+    topLabel: String? = null,
 ): MarkerArt {
     val circle = (sizeDp * density).toInt().coerceAtLeast(8)
     val ringW = ringWidthDp * density
-    if (label == null) {
+    if (label == null && topLabel == null) {
         val bmp = Bitmap.createBitmap(circle, circle, Bitmap.Config.ARGB_8888)
         drawCircleGlyph(Canvas(bmp), ctx, circle / 2f, circle / 2f, circle, ringW, fill, ringColor, glyphRes)
         return MarkerArt(BitmapDrawable(ctx.resources, bmp), 0.5f)
@@ -102,17 +105,30 @@ fun buildStationMarker(
     val fm = textPaint.fontMetrics
     val textH = fm.descent - fm.ascent
     val gap = 2f * density
-    val textW = textPaint.measureText(label)
+    val textW = maxOf(
+        label?.let { textPaint.measureText(it) } ?: 0f,
+        topLabel?.let { textPaint.measureText(it) } ?: 0f,
+    )
+    val topH = if (topLabel != null) textH + gap else 0f
+    val bottomH = if (label != null) gap + textH else 0f
     val w = maxOf(circle.toFloat(), textW + 6f * density).toInt()
-    val h = (circle + gap + textH).toInt() + 1
+    val h = (topH + circle + bottomH).toInt() + 1
     val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
     val cx = w / 2f
-    drawCircleGlyph(canvas, ctx, cx, circle / 2f, circle, ringW, fill, ringColor, glyphRes)
-    val baseY = circle + gap - fm.ascent
-    canvas.drawText(label, cx, baseY, haloPaint)
-    canvas.drawText(label, cx, baseY, textPaint)
-    return MarkerArt(BitmapDrawable(ctx.resources, bmp), (circle / 2f) / h)
+    val cy = topH + circle / 2f
+    drawCircleGlyph(canvas, ctx, cx, cy, circle, ringW, fill, ringColor, glyphRes)
+    topLabel?.let {
+        val baseY = -fm.ascent
+        canvas.drawText(it, cx, baseY, haloPaint)
+        canvas.drawText(it, cx, baseY, textPaint)
+    }
+    label?.let {
+        val baseY = topH + circle + gap - fm.ascent
+        canvas.drawText(it, cx, baseY, haloPaint)
+        canvas.drawText(it, cx, baseY, textPaint)
+    }
+    return MarkerArt(BitmapDrawable(ctx.resources, bmp), cy / h)
 }
 
 /**

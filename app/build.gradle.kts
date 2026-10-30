@@ -12,8 +12,8 @@ android {
         applicationId = "ar.trenar.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 26
-        versionName = "1.17.1"
+        versionCode = 27
+        versionName = "1.18.0"
         vectorDrawables { useSupportLibrary = true }
     }
 

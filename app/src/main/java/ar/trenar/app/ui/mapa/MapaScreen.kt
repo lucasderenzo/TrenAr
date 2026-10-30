@@ -173,11 +173,20 @@ fun MapaScreen(
                         }
                     } else {
                         val argb = LineColors.colorFor(state.selected).toArgb()
+                        // terminals: double-size circle with "Est. Terminal" above and the name below
+                        val terminalTag = ctx.getString(R.string.est_terminal)
                         state.stations.forEach { st ->
-                            val label = if (LineTerminals.isTerminal(state.selected, st.name)) st.name else null
-                            val art = buildStationMarker(
-                                ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, label,
-                            )
+                            val terminal = LineTerminals.isTerminal(state.selected, st.name)
+                            val art = if (terminal) {
+                                buildStationMarker(
+                                    ctx, density, argb, 36f, AndroidColor.WHITE, 2f, R.drawable.ic_stat_train,
+                                    st.name, terminalTag,
+                                )
+                            } else {
+                                buildStationMarker(
+                                    ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
+                                )
+                            }
                             Marker(mv).apply {
                                 position = GeoPoint(st.lat, st.lng)
                                 icon = art.drawable
