@@ -2,7 +2,6 @@ package ar.trenar.app.ui.common
 
 import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
-import android.graphics.RectF
 import android.view.MotionEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -20,7 +19,6 @@ import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.util.TileSystem
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -32,16 +30,6 @@ data class MiniTrain(
     val colorArgb: Int,
     val label: String,
     val headingEast: Boolean = true,
-)
-
-/** One station of the line drawn on the mini-map, with its plain and labeled marker art. */
-private class LineStop(
-    val marker: Marker,
-    val plain: MarkerArt,
-    val labeled: MarkerArt,
-    val point: GeoPoint,
-    /** Lower = labeled first when names would overlap (the focused station, then terminals). */
-    val priority: Int,
 )
 
 /**
@@ -187,35 +175,4 @@ fun StationMiniMap(
             }
         },
     )
-}
-
-/**
- * Shows station names only where they fit at the current zoom: stations are labeled in priority
- * order (focused station, terminals, then the rest) and a name is skipped when its box would
- * overlap one already placed. Overlap only depends on zoom, so this runs on zoom changes.
- */
-private fun declutterLabels(mv: MapView, stops: List<LineStop>) {
-    if (stops.isEmpty()) return
-    val mapSize = TileSystem.MapSize(mv.zoomLevelDouble)
-    val ts = MapView.getTileSystem()
-    val placed = mutableListOf<RectF>()
-    stops.withIndex()
-        .sortedWith(compareBy({ it.value.priority }, { it.index }))
-        .forEach { (_, stop) ->
-            val x = ts.getMercatorXFromLongitude(stop.point.longitude, mapSize, false).toFloat()
-            val y = ts.getMercatorYFromLatitude(stop.point.latitude, mapSize, false).toFloat()
-            val d = stop.labeled.drawable
-            val w = d.intrinsicWidth.toFloat()
-            val h = d.intrinsicHeight.toFloat()
-            val top = y - stop.labeled.anchorY * h
-            val box = RectF(x - w / 2f, top, x + w / 2f, top + h)
-            val fits = placed.none { RectF.intersects(it, box) }
-            val art = if (fits) stop.labeled else stop.plain
-            if (fits) placed += box
-            if (stop.marker.icon !== art.drawable) {
-                stop.marker.icon = art.drawable
-                stop.marker.setAnchor(Marker.ANCHOR_CENTER, art.anchorY)
-            }
-        }
-    mv.invalidate()
 }

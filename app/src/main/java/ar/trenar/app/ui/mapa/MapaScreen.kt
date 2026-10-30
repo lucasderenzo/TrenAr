@@ -51,9 +51,11 @@ import ar.trenar.app.data.LineInfo
 import ar.trenar.app.data.LineTerminals
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.ui.common.LineBadge
+import ar.trenar.app.ui.common.LineStop
 import ar.trenar.app.ui.common.buildMarker
 import ar.trenar.app.ui.common.buildStationMarker
 import ar.trenar.app.ui.common.buildTrainSprite
+import ar.trenar.app.ui.common.declutterLabels
 import ar.trenar.app.ui.common.TabHeader
 import ar.trenar.app.ui.theme.LineColors
 import ar.trenar.app.ui.theme.OnTimeGreen
@@ -61,6 +63,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -95,10 +100,23 @@ fun MapaScreen(
         }
     }
     val lastFitted = remember { mutableStateOf("") }
+    // Station markers are rebuilt only when the line or its stations change, not on every train
+    // refresh, so the zoom-based name declutter only has to run on zoom and on station changes.
+    val stops = remember { mutableListOf<LineStop>() }
+    val stopsKey = remember { mutableStateOf("") }
 
     DisposableEffect(Unit) {
+        val listener = object : MapListener {
+            override fun onScroll(event: ScrollEvent?) = false
+            override fun onZoom(event: ZoomEvent?): Boolean {
+                declutterLabels(mapView, stops)
+                return false
+            }
+        }
+        mapView.addMapListener(listener)
         mapView.onResume()
         onDispose {
+            mapView.removeMapListener(listener)
             mapView.onPause()
             mapView.onDetach()
         }
@@ -158,6 +176,8 @@ fun MapaScreen(
                 update = { mv ->
                     mv.overlays.clear()
                     if (state.isBikes) {
+                        stops.clear()
+                        stopsKey.value = ""
                         val bikeIcon = buildMarker(
                             ctx, density, AndroidColor.parseColor(ECOBICI_YELLOW), 20f,
                             AndroidColor.WHITE, 2f, R.drawable.ic_bike,
@@ -173,28 +193,42 @@ fun MapaScreen(
                         }
                     } else {
                         val argb = LineColors.colorFor(state.selected).toArgb()
-                        // terminals: double-size circle with "Est. Terminal" above and the name below
-                        val terminalTag = ctx.getString(R.string.est_terminal)
-                        state.stations.forEach { st ->
-                            val terminal = LineTerminals.isTerminal(state.selected, st.name)
-                            val art = if (terminal) {
-                                buildStationMarker(
-                                    ctx, density, argb, 36f, AndroidColor.WHITE, 2f, R.drawable.ic_stat_train,
-                                    st.name, terminalTag,
-                                )
-                            } else {
-                                buildStationMarker(
-                                    ctx, density, argb, 18f, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
-                                )
-                            }
-                            Marker(mv).apply {
-                                position = GeoPoint(st.lat, st.lng)
-                                icon = art.drawable
-                                setAnchor(Marker.ANCHOR_CENTER, art.anchorY)
-                                title = st.name
-                                setOnMarkerClickListener { _, _ -> onOpenStation(st.id); true }
-                            }.also { mv.overlays.add(it) }
+                        val key = buildString {
+                            append(state.selected).append('#').append(argb)
+                            state.stations.forEach { append(';').append(it.id) }
                         }
+                        val stationsChanged = key != stopsKey.value
+                        if (stationsChanged) {
+                            stopsKey.value = key
+                            stops.clear()
+                            // terminals: double-size circle with "Est. Terminal" above and the name below,
+                            // always labeled; other names show up as the zoom makes room for them without overlapping.
+                            val terminalTag = ctx.getString(R.string.est_terminal)
+                            state.stations.forEach { st ->
+                                val terminal = LineTerminals.isTerminal(state.selected, st.name)
+                                val sizeDp = if (terminal) 36f else 18f
+                                val stroke = if (terminal) 2f else 1.5f
+                                val plain = buildStationMarker(
+                                    ctx, density, argb, sizeDp, AndroidColor.WHITE, stroke, R.drawable.ic_stat_train,
+                                    null,
+                                )
+                                val labeled = buildStationMarker(
+                                    ctx, density, argb, sizeDp, AndroidColor.WHITE, stroke, R.drawable.ic_stat_train,
+                                    st.name, if (terminal) terminalTag else null,
+                                )
+                                val point = GeoPoint(st.lat, st.lng)
+                                val marker = Marker(mv).apply {
+                                    position = point
+                                    icon = plain.drawable
+                                    setAnchor(Marker.ANCHOR_CENTER, plain.anchorY)
+                                    title = st.name
+                                    setOnMarkerClickListener { _, _ -> onOpenStation(st.id); true }
+                                }
+                                stops += LineStop(marker, plain, labeled, point, if (terminal) 0 else 1, pinned = terminal)
+                            }
+                        }
+                        stops.forEach { mv.overlays.add(it.marker) }
+                        if (stationsChanged) declutterLabels(mv, stops)
                         // a 3D-ish side-view train sprite (line-colored, white outline), one per heading
                         val trainEast = buildTrainSprite(ctx, density, argb, 30f, flip = false)
                         val trainWest = buildTrainSprite(ctx, density, argb, 30f, flip = true)
