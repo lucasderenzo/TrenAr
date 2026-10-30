@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -178,6 +180,7 @@ fun BoardScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BoardContent(
     state: BoardUiState,
@@ -283,7 +286,10 @@ private fun BoardContent(
 
         if (state.destinations.size > 1) {
             item {
-                Row(
+                // FlowRow so chips wrap to the next line instead of being clipped at
+                // stations with many branches (e.g. Constitución), and every
+                // destination stays reachable.
+                FlowRow(
                     Modifier.fillMaxWidth().padding(vertical = 2.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -292,7 +298,7 @@ private fun BoardContent(
                         onClick = { onFilter(null) },
                         label = { Text(stringResource(R.string.todos)) },
                     )
-                    state.destinations.take(4).forEach { dest ->
+                    state.destinations.forEach { dest ->
                         FilterChip(
                             selected = state.filterDestination == dest,
                             onClick = { onFilter(dest) },
