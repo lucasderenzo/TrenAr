@@ -22,11 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ar.trenar.app.R
 import ar.trenar.app.data.model.DelayStatus
@@ -83,6 +85,34 @@ fun LineChip(line: String, color: Color) {
             fontWeight = FontWeight.SemiBold,
         )
     }
+}
+
+/** Solid box filled with the line color and its name in contrasting text (e.g. under the station title). */
+@Composable
+fun LineBadge(line: String, color: Color, modifier: Modifier = Modifier) {
+    if (line.isBlank()) return
+    Box(
+        modifier = modifier
+            .background(color, RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = line,
+            color = contentColorOn(color),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** White or black, whichever has the higher WCAG contrast ratio against [background]. */
+fun contentColorOn(background: Color): Color {
+    val l = background.luminance()
+    val whiteContrast = 1.05f / (l + 0.05f)
+    val blackContrast = (l + 0.05f) / 0.05f
+    return if (whiteContrast >= blackContrast) Color.White else Color.Black
 }
 
 @Composable
