@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Feedback
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.Button
@@ -47,6 +48,7 @@ import ar.trenar.app.R
 import ar.trenar.app.di.ServiceLocator
 import ar.trenar.app.ui.common.TabHeader
 import ar.trenar.app.util.LocaleHelper
+import ar.trenar.app.util.ThemeHelper
 import kotlinx.coroutines.launch
 
 private fun Context.findActivity(): Activity? {
@@ -66,6 +68,7 @@ fun SettingsScreen() {
     val ctx = LocalContext.current
     val notify by prefs.notifyEnabled.collectAsStateWithLifecycle(initialValue = true)
     val currentLang = LocaleHelper.getLang(ctx)
+    val currentTheme = ThemeHelper.getMode(ctx)
     var showFeedback by remember { mutableStateOf(false) }
 
     if (showFeedback) FeedbackDialog(onDismiss = { showFeedback = false })
@@ -157,6 +160,56 @@ fun SettingsScreen() {
                                 onClick = {
                                     if (currentLang != tag) {
                                         LocaleHelper.setLang(ctx, tag)
+                                        ctx.findActivity()?.recreate()
+                                    }
+                                },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Filled.DarkMode,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.size(10.dp))
+                        Text(
+                            stringResource(R.string.tema_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.tema_sub),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val options = listOf(
+                            ThemeHelper.SYSTEM to stringResource(R.string.tema_sistema),
+                            ThemeHelper.LIGHT to stringResource(R.string.tema_claro),
+                            ThemeHelper.DARK to stringResource(R.string.tema_oscuro),
+                        )
+                        options.forEach { (mode, label) ->
+                            FilterChip(
+                                selected = currentTheme == mode,
+                                onClick = {
+                                    if (currentTheme != mode) {
+                                        ThemeHelper.setMode(ctx, mode)
                                         ctx.findActivity()?.recreate()
                                     }
                                 },
