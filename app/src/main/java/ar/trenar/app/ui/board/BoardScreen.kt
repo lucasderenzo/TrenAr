@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -74,6 +75,7 @@ import ar.trenar.app.ui.common.DelayBadge
 import ar.trenar.app.ui.common.EmptyState
 import ar.trenar.app.ui.common.Format
 import ar.trenar.app.ui.common.FreshnessPill
+import ar.trenar.app.ui.common.LineBadge
 import ar.trenar.app.ui.common.LineChip
 import ar.trenar.app.ui.common.MiniTrain
 import ar.trenar.app.ui.common.StationMiniMap
@@ -118,7 +120,19 @@ fun BoardScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(stationName, maxLines = 1, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            stationName,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        state.board?.station?.line?.takeIf { it.isNotBlank() }?.let { line ->
+                            LineBadge(
+                                line = line,
+                                color = LineColors.colorFor(line),
+                                modifier = Modifier.padding(vertical = 2.dp),
+                            )
+                        }
                         state.board?.let {
                             FreshnessPill(secondsAgo = (nowSec - it.loadedAtEpochSec).coerceAtLeast(0))
                         }
