@@ -92,6 +92,7 @@
     <string name="sin_trenes_posicion">No trains with live position right now</string>
     <string name="tren_a">Train to %1$s</string>
     <string name="tren_estimado_a">Estimated train to %1$s</string>
+    <string name="est_terminal">Terminal</string>
     <string name="todos">All</string>
     <string name="anden">Platform %1$s</string>
     <string name="sale_hora">departs %1$s</string>

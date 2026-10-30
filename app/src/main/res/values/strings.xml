@@ -102,6 +102,7 @@
     <string name="sin_trenes_posicion">Sin trenes con posición en vivo ahora</string>
     <string name="tren_a">Tren a %1$s</string>
     <string name="tren_estimado_a">Tren estimado a %1$s</string>
+    <string name="est_terminal">Est. Terminal</string>
     <string name="todos">Todos</string>
     <string name="anden">Andén %1$s</string>
     <string name="sale_hora">sale %1$s</string>
