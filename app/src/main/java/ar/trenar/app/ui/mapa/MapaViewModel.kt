@@ -8,6 +8,7 @@ import ar.trenar.app.data.model.BikeStation
 import ar.trenar.app.data.model.EstimatedTrain
 import ar.trenar.app.data.model.StationRef
 import ar.trenar.app.di.ServiceLocator
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -48,46 +49,67 @@ class MapaViewModel : ViewModel() {
         if (chip == ECOBICI) loadBikes() else loadLine(chip)
     }
 
+    /**
+     * Silent periodic refresh (called every [AUTO_REFRESH_MS] while the map is visible): keeps the
+     * markers on screen while loading, skips if a load is still running, and on a network error
+     * leaves the previous positions untouched.
+     */
     fun refresh() {
+        if (loadJob?.isActive == true) return
         val sel = _state.value.selected
-        if (sel == ECOBICI) loadBikes(force = true) else if (sel.isNotBlank()) loadLine(sel)
+        if (sel == ECOBICI) {
+            // bike availability changes slowly: no need to hit the API on every train tick
+            if (System.currentTimeMillis() - lastBikesLoad >= BIKES_REFRESH_MS) loadBikes(force = true, silent = true)
+        } else if (sel.isNotBlank()) loadLine(sel, silent = true)
     }
 
-    private fun loadLine(line: String) {
-        viewModelScope.launch {
-            val stations = repo.stationsOfLine(line)
-            _state.update {
-                it.copy(stations = stations, trains = emptyList(), estimatedTrains = emptyList(), loading = true)
+    private var loadJob: Job? = null
+    private var lastBikesLoad = 0L
+
+    private fun loadLine(line: String, silent: Boolean = false) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (!silent) {
+                val stations = repo.stationsOfLine(line)
+                _state.update {
+                    it.copy(stations = stations, trains = emptyList(), estimatedTrains = emptyList(), loading = true)
+                }
             }
             if (!LineInfo.hasRealtime(line)) {
-                val est = runCatching { repo.estimatedTrains(line) }.getOrDefault(emptyList())
+                val est = runCatching { repo.estimatedTrains(line) }.getOrNull()
                 _state.update {
-                    if (it.selected == line) it.copy(estimatedTrains = est, loading = false)
+                    if (it.selected == line && est != null) it.copy(estimatedTrains = est, loading = false)
                     else it.copy(loading = false)
                 }
                 return@launch
             }
-            val trains = runCatching { repo.liveTrains(line) }.getOrDefault(emptyList())
+            val trains = runCatching { repo.liveTrains(line) }.getOrNull()
             _state.update {
-                if (it.selected == line) it.copy(trains = trains, loading = false)
+                if (it.selected == line && trains != null) it.copy(trains = trains, loading = false)
                 else it.copy(loading = false)
             }
         }
     }
 
-    private fun loadBikes(force: Boolean = false) {
-        viewModelScope.launch {
-            if (!force && _state.value.bikes.isNotEmpty()) return@launch
-            _state.update { it.copy(loading = true) }
-            val bikes = runCatching { repo.ecobiciStations() }.getOrDefault(emptyList())
+    private fun loadBikes(force: Boolean = false, silent: Boolean = false) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (!force && _state.value.bikes.isNotEmpty()) {
+                _state.update { it.copy(loading = false) }
+                return@launch
+            }
+            if (!silent) _state.update { it.copy(loading = true) }
+            val bikes = runCatching { repo.ecobiciStations() }.getOrNull()
+            if (!bikes.isNullOrEmpty()) lastBikesLoad = System.currentTimeMillis()
             _state.update {
-                if (it.selected == ECOBICI) it.copy(bikes = bikes, loading = false)
-                else it.copy(bikes = bikes, loading = false)
+                if (bikes.isNullOrEmpty()) it.copy(loading = false) else it.copy(bikes = bikes, loading = false)
             }
         }
     }
 
     companion object {
         const val ECOBICI = "Ecobici"
+        const val AUTO_REFRESH_MS = 10_000L
+        const val BIKES_REFRESH_MS = 60_000L
     }
 }

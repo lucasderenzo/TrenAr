@@ -127,6 +127,8 @@ data class EstimatedTrain(
     val toIndex: Int,
     /** True when the train is moving eastbound (+lng): used to orient the map sprite. */
     val headingEast: Boolean = true,
+    /** Identifies the scheduled trip, stable across recomputations (used to animate the marker). */
+    val tripId: String = "",
 )
 
 /** Result of loading a station board. */

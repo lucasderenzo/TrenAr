@@ -143,6 +143,8 @@ class ScheduleCatalog(private val context: Context) {
             while (remaining[s].isNotEmpty()) {
                 var curTime = remaining[s].removeAt(0)
                 var curIdx = s
+                // stable across recomputations (origin + departure), so the map can animate the same trip
+                val tripId = "$destination@$s@$curTime"
                 // extend this trip forward through the remaining stations in travel order
                 for (jj in (j + 1) until order.size) {
                     val ns = order[jj]
@@ -163,6 +165,7 @@ class ScheduleCatalog(private val context: Context) {
                                 fromIndex = curIdx,
                                 toIndex = ns,
                                 headingEast = bLng >= aLng,
+                                tripId = tripId,
                             ),
                         )
                     }

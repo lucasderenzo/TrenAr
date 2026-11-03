@@ -2,6 +2,9 @@ package ar.trenar.app.ui.mapa
 
 import android.Manifest
 import android.graphics.Color as AndroidColor
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +34,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,11 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.trenar.app.R
 import ar.trenar.app.data.LineInfo
@@ -62,6 +70,7 @@ import ar.trenar.app.ui.theme.OnTimeGreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -104,6 +113,64 @@ fun MapaScreen(
     // refresh, so the zoom-based name declutter only has to run on zoom and on station changes.
     val stops = remember { mutableListOf<LineStop>() }
     val stopsKey = remember { mutableStateOf("") }
+    // Train markers survive refreshes so they can glide to their new position instead of jumping;
+    // the version bump tells the map's update block to re-add them after a sync.
+    val trainMarkers = remember { TrainMarkers() }
+    val trainsVersion = remember { mutableIntStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Auto-refresh while the map is on screen and the app is in the foreground; leaving the
+    // screen cancels it, backgrounding pauses it. Coming back after a while refreshes right away.
+    LaunchedEffect(lifecycleOwner) {
+        var lastRefresh = System.currentTimeMillis()
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                val elapsed = System.currentTimeMillis() - lastRefresh
+                delay((MapaViewModel.AUTO_REFRESH_MS - elapsed).coerceAtLeast(0))
+                viewModel.refresh()
+                lastRefresh = System.currentTimeMillis()
+            }
+        }
+    }
+
+    // On every new batch of positions: sync the markers, then glide them from where they're drawn
+    // to the new spot. A newer batch cancels the glide and starts from the in-between position.
+    LaunchedEffect(state.isBikes, state.selected, state.stations, state.trains, state.estimatedTrains) {
+        val spots = if (state.isBikes) emptyList() else {
+            val argb = LineColors.colorFor(state.selected).toArgb()
+            // a 3D-ish side-view train sprite (line-colored, white outline), one per heading
+            val trainEast = buildTrainSprite(ctx, density, argb, 30f, flip = false)
+            val trainWest = buildTrainSprite(ctx, density, argb, 30f, flip = true)
+            val live = state.trains.mapNotNull { t ->
+                val lat = t.trainLat ?: return@mapNotNull null
+                val lng = t.trainLng ?: return@mapNotNull null
+                // Orient by where the destination terminal sits relative to the train.
+                val destLng = state.stations.firstOrNull { it.name == t.destination }?.lng
+                val east = destLng?.let { it >= lng } ?: true
+                TrainSpot(
+                    "live:${t.serviceId}", GeoPoint(lat, lng), if (east) trainEast else trainWest,
+                    ctx.getString(R.string.tren_a, t.destination),
+                )
+            }
+            // schedule-estimated positions for the no-realtime lines
+            val estimated = state.estimatedTrains.mapIndexed { i, t ->
+                TrainSpot(
+                    "est:${t.tripId.ifBlank { i.toString() }}", GeoPoint(t.lat, t.lng),
+                    if (t.headingEast) trainEast else trainWest,
+                    ctx.getString(R.string.tren_estimado_a, t.destination),
+                )
+            }
+            live + estimated
+        }
+        trainMarkers.sync(mapView, spots)
+        trainsVersion.intValue++
+        val glide = Animatable(0f)
+        glide.animateTo(1f, tween(TRAIN_GLIDE_MS, easing = FastOutSlowInEasing)) {
+            trainMarkers.step(value)
+            mapView.invalidate()
+        }
+        trainMarkers.settle()
+    }
 
     DisposableEffect(Unit) {
         val listener = object : MapListener {
@@ -229,33 +296,8 @@ fun MapaScreen(
                         }
                         stops.forEach { mv.overlays.add(it.marker) }
                         if (stationsChanged) declutterLabels(mv, stops)
-                        // a 3D-ish side-view train sprite (line-colored, white outline), one per heading
-                        val trainEast = buildTrainSprite(ctx, density, argb, 30f, flip = false)
-                        val trainWest = buildTrainSprite(ctx, density, argb, 30f, flip = true)
-                        state.trains.forEach { t ->
-                            val lat = t.trainLat ?: return@forEach
-                            val lng = t.trainLng ?: return@forEach
-                            // Orient by where the destination terminal sits relative to the train.
-                            val destLng = state.stations.firstOrNull { it.name == t.destination }?.lng
-                            val east = destLng?.let { it >= lng } ?: true
-                            Marker(mv).apply {
-                                position = GeoPoint(lat, lng)
-                                icon = if (east) trainEast else trainWest
-                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                title = ctx.getString(R.string.tren_a, t.destination)
-                                setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
-                            }.also { mv.overlays.add(it) }
-                        }
-                        // schedule-estimated positions for the no-realtime lines
-                        state.estimatedTrains.forEach { t ->
-                            Marker(mv).apply {
-                                position = GeoPoint(t.lat, t.lng)
-                                icon = if (t.headingEast) trainEast else trainWest
-                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                title = ctx.getString(R.string.tren_estimado_a, t.destination)
-                                setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
-                            }.also { mv.overlays.add(it) }
-                        }
+                        trainsVersion.intValue  // re-run after each marker sync
+                        mv.overlays.addAll(trainMarkers.markers)
                     }
                     myLocation.value?.let { gp ->
                         val personIcon = buildMarker(
@@ -313,6 +355,8 @@ fun MapaScreen(
                     Text(
                         text = when {
                             state.isBikes -> stringResource(R.string.pill_ecobici, state.bikes.size)
+                            !LineInfo.hasRealtime(state.selected) && state.estimatedTrains.isNotEmpty() ->
+                                stringResource(R.string.pill_estimados, state.selected, state.estimatedTrains.size)
                             !LineInfo.hasRealtime(state.selected) -> stringResource(R.string.pill_sin_vivo, state.selected, state.stations.size)
                             else -> stringResource(R.string.pill_en_vivo, state.selected, state.trains.size)
                         },

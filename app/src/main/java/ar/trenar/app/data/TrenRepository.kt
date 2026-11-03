@@ -139,6 +139,9 @@ class TrenRepository(
         val responses = sample.map { st ->
             async { runCatching { api.arrivals(st.id, cantidad = 12) }.getOrNull() }
         }.awaitAll()
+        // Every sampled request failed: surface it as an error instead of "no trains", so callers
+        // can keep what they're already showing.
+        if (responses.all { it == null }) throw java.io.IOException("liveTrains: all requests failed")
         responses.filterNotNull()
             .flatMap { resp ->
                 val ts = if (resp.timestamp > 0) resp.timestamp else System.currentTimeMillis() / 1000
