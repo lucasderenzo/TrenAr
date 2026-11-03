@@ -107,7 +107,7 @@ fun BoardScreen(
     // periodic resync
     LaunchedEffect(Unit) {
         while (true) {
-            delay(20_000)
+            delay(10_000)
             viewModel.load(initial = false, auto = true)
         }
     }

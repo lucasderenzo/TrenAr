@@ -112,7 +112,7 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
     /**
      * Loads the rest of the line for the mini-map, in the background so the board isn't delayed.
      * Live trains of the whole line take several requests, so they're refreshed at most once a
-     * minute by the periodic resync (or on a manual refresh).
+     * minute by the periodic resync (or on a manual refresh); calculated ones on every refresh.
      */
     private fun loadLine(line: String, force: Boolean) {
         viewModelScope.launch {
@@ -120,16 +120,18 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
                 val stations = runCatching { repo.stationsOfLine(line) }.getOrDefault(emptyList())
                 _state.update { it.copy(lineStations = stations) }
             }
+            if (!LineInfo.hasRealtime(line)) {
+                // Calculated from the bundled timetable, without any request: recompute them on
+                // every refresh so they move in step with the nearby ones instead of lagging a minute.
+                val est = runCatching { repo.estimatedTrains(line) }.getOrDefault(emptyList())
+                _state.update { it.copy(lineEstimated = est) }
+                return@launch
+            }
             val now = System.currentTimeMillis() / 1000
             if (!force && now - lineTrainsLoadedAt < LINE_TRAINS_MIN_INTERVAL_SEC) return@launch
             lineTrainsLoadedAt = now
-            if (LineInfo.hasRealtime(line)) {
-                val trains = runCatching { repo.liveTrains(line) }.getOrNull() ?: return@launch
-                _state.update { it.copy(lineTrains = trains) }
-            } else {
-                val est = runCatching { repo.estimatedTrains(line) }.getOrDefault(emptyList())
-                _state.update { it.copy(lineEstimated = est) }
-            }
+            val trains = runCatching { repo.liveTrains(line) }.getOrNull() ?: return@launch
+            _state.update { it.copy(lineTrains = trains) }
         }
     }
 
