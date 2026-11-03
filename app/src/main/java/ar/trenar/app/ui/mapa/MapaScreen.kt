@@ -65,6 +65,9 @@ import ar.trenar.app.ui.common.buildStationMarker
 import ar.trenar.app.ui.common.buildTrainSprite
 import ar.trenar.app.ui.common.declutterLabels
 import ar.trenar.app.ui.common.TabHeader
+import ar.trenar.app.ui.common.TRAIN_GLIDE_MS
+import ar.trenar.app.ui.common.TrainMarkers
+import ar.trenar.app.ui.common.TrainSpot
 import ar.trenar.app.ui.theme.LineColors
 import ar.trenar.app.ui.theme.OnTimeGreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi

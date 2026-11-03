@@ -2,9 +2,15 @@ package ar.trenar.app.ui.common
 
 import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
+import android.graphics.drawable.Drawable
 import android.view.MotionEvent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,13 +29,18 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
-/** A live train to draw on a station mini-map. [headingEast] orients the side-view sprite. */
+/**
+ * A live train to draw on a station mini-map. [headingEast] orients the side-view sprite.
+ * [key] identifies the same train across refreshes so its marker glides to the new position;
+ * when blank, the train's index in its list is used instead.
+ */
 data class MiniTrain(
     val lat: Double,
     val lng: Double,
     val colorArgb: Int,
     val label: String,
     val headingEast: Boolean = true,
+    val key: String = "",
 )
 
 /**
@@ -65,7 +76,15 @@ fun StationMiniMap(
             controller.setCenter(GeoPoint(lat, lng))
         }
     }
-    val lastKey = remember { mutableStateOf("") }
+    // Station markers and the pin are rebuilt only when the station or its line change, not on
+    // every train refresh, so the map doesn't blink and names aren't decluttered again for nothing.
+    val stationsKey = remember { mutableStateOf("") }
+    val pin = remember { mutableStateOf<Marker?>(null) }
+    // Train markers survive refreshes so they glide to their new position (like "Red en vivo");
+    // the version bump tells the update block to re-add them after a sync.
+    val trainMarkers = remember { TrainMarkers() }
+    val trainsVersion = remember { mutableIntStateOf(0) }
+    val trainIcons = remember { HashMap<Pair<Int, Boolean>, Drawable>() }
     val lastFitKey = remember { mutableStateOf("") }
     // Once the user pinches/pans the map, periodic refreshes must not undo it with an auto-zoom.
     val userMoved = remember { mutableStateOf(false) }
@@ -100,6 +119,28 @@ fun StationMiniMap(
         }
     }
 
+    // On every new batch of positions: sync the markers, then glide them from where they're drawn
+    // to the new spot. A newer batch cancels the glide and starts from the in-between position.
+    LaunchedEffect(trains, extraTrains) {
+        val spots = (trains.mapIndexed { i, t -> t to "t$i" } + extraTrains.mapIndexed { i, t -> t to "x$i" })
+            .map { (t, fallback) ->
+                val icon = trainIcons.getOrPut(t.colorArgb to t.headingEast) {
+                    buildTrainSprite(ctx, density, t.colorArgb, 30f, flip = !t.headingEast)
+                }
+                TrainSpot(t.key.ifBlank { fallback }, GeoPoint(t.lat, t.lng), icon, t.label)
+            }
+            .distinctBy { it.key }
+        trainMarkers.sync(mapView, spots)
+        trainsVersion.intValue++
+        if (spots.isEmpty()) return@LaunchedEffect
+        val glide = Animatable(0f)
+        glide.animateTo(1f, tween(TRAIN_GLIDE_MS, easing = FastOutSlowInEasing)) {
+            trainMarkers.step(value)
+            mapView.invalidate()
+        }
+        trainMarkers.settle()
+    }
+
     AndroidView(
         factory = { mapView },
         modifier = modifier,
@@ -109,59 +150,53 @@ fun StationMiniMap(
                 trains.forEach { append('|').append(it.lat).append(',').append(it.lng) }
             }
             val key = buildString {
-                append(fitKey).append('#').append(lineColorArgb)
+                append(lat).append(',').append(lng).append('#').append(label).append('#').append(lineColorArgb)
                 lineStations.forEach { append(';').append(it.id) }
-                extraTrains.forEach { append('|').append(it.lat).append(',').append(it.lng) }
             }
-            if (key == lastKey.value) return@AndroidView
-            lastKey.value = key
-
-            mv.overlays.clear()
-            stops.clear()
-            val terminalTag = ctx.getString(R.string.est_terminal)
-            val focusedId = lineStations.firstOrNull { it.lat == lat && it.lng == lng }?.id
-            lineStations.forEach { st ->
-                val focused = st.id == focusedId
-                val terminal = LineTerminals.isTerminal(st.line, st.name)
-                // terminals: double-size circle, and "Est. Terminal" above the name when it fits
-                val sizeDp = if (terminal) 28f else 14f
-                val plain = buildStationMarker(
-                    ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
-                )
-                val labeled = buildStationMarker(
-                    ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, st.name,
-                    if (terminal) terminalTag else null,
-                )
-                val point = GeoPoint(st.lat, st.lng)
-                val marker = Marker(mv).apply {
-                    position = point
-                    icon = plain.drawable
-                    setAnchor(Marker.ANCHOR_CENTER, plain.anchorY)
-                    title = st.name
+            val stationsChanged = key != stationsKey.value
+            if (stationsChanged) {
+                stationsKey.value = key
+                stops.clear()
+                val terminalTag = ctx.getString(R.string.est_terminal)
+                val focusedId = lineStations.firstOrNull { it.lat == lat && it.lng == lng }?.id
+                lineStations.forEach { st ->
+                    val focused = st.id == focusedId
+                    val terminal = LineTerminals.isTerminal(st.line, st.name)
+                    // terminals: double-size circle, and "Est. Terminal" above the name when it fits
+                    val sizeDp = if (terminal) 28f else 14f
+                    val plain = buildStationMarker(
+                        ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, null,
+                    )
+                    val labeled = buildStationMarker(
+                        ctx, density, lineColorArgb, sizeDp, AndroidColor.WHITE, 1.5f, R.drawable.ic_stat_train, st.name,
+                        if (terminal) terminalTag else null,
+                    )
+                    val point = GeoPoint(st.lat, st.lng)
+                    val marker = Marker(mv).apply {
+                        position = point
+                        icon = plain.drawable
+                        setAnchor(Marker.ANCHOR_CENTER, plain.anchorY)
+                        title = st.name
+                        setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
+                    }
+                    stops += LineStop(marker, plain, labeled, point, if (focused) 0 else if (terminal) 1 else 2)
+                }
+                pin.value = Marker(mv).apply {
+                    position = GeoPoint(lat, lng)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    title = label
                     setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
                 }
-                mv.overlays.add(marker)
-                stops += LineStop(marker, plain, labeled, point, if (focused) 0 else if (terminal) 1 else 2)
             }
 
-            Marker(mv).apply {
-                position = GeoPoint(lat, lng)
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                title = label
-                setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
-            }.also { mv.overlays.add(it) }
-
-            (trains + extraTrains).forEach { t ->
-                val icon = buildTrainSprite(ctx, density, t.colorArgb, 30f, flip = !t.headingEast)
-                Marker(mv).apply {
-                    position = GeoPoint(t.lat, t.lng)
-                    this.icon = icon
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                    title = t.label
-                    setOnMarkerClickListener { m, _ -> m.showInfoWindow(); true }
-                }.also { mv.overlays.add(it) }
-            }
-            declutterLabels(mv, stops)
+            // Draw order: stations, then the pin, then the trains on top. Same marker instances
+            // every time, so re-adding them doesn't blink.
+            mv.overlays.clear()
+            stops.forEach { mv.overlays.add(it.marker) }
+            pin.value?.let { mv.overlays.add(it) }
+            trainsVersion.intValue  // re-run after each marker sync
+            mv.overlays.addAll(trainMarkers.markers)
+            if (stationsChanged) declutterLabels(mv, stops)
             mv.invalidate()
 
             if (userMoved.value || fitKey == lastFitKey.value) return@AndroidView
