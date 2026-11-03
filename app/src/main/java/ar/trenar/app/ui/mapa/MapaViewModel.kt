@@ -57,11 +57,14 @@ class MapaViewModel : ViewModel() {
     fun refresh() {
         if (loadJob?.isActive == true) return
         val sel = _state.value.selected
-        if (sel == ECOBICI) loadBikes(force = true, silent = true)
-        else if (sel.isNotBlank()) loadLine(sel, silent = true)
+        if (sel == ECOBICI) {
+            // bike availability changes slowly: no need to hit the API on every train tick
+            if (System.currentTimeMillis() - lastBikesLoad >= BIKES_REFRESH_MS) loadBikes(force = true, silent = true)
+        } else if (sel.isNotBlank()) loadLine(sel, silent = true)
     }
 
     private var loadJob: Job? = null
+    private var lastBikesLoad = 0L
 
     private fun loadLine(line: String, silent: Boolean = false) {
         loadJob?.cancel()
@@ -97,6 +100,7 @@ class MapaViewModel : ViewModel() {
             }
             if (!silent) _state.update { it.copy(loading = true) }
             val bikes = runCatching { repo.ecobiciStations() }.getOrNull()
+            if (!bikes.isNullOrEmpty()) lastBikesLoad = System.currentTimeMillis()
             _state.update {
                 if (bikes.isNullOrEmpty()) it.copy(loading = false) else it.copy(bikes = bikes, loading = false)
             }
@@ -105,6 +109,7 @@ class MapaViewModel : ViewModel() {
 
     companion object {
         const val ECOBICI = "Ecobici"
-        const val AUTO_REFRESH_MS = 20_000L
+        const val AUTO_REFRESH_MS = 10_000L
+        const val BIKES_REFRESH_MS = 60_000L
     }
 }
