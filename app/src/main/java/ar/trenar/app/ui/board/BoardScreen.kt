@@ -409,14 +409,19 @@ private fun ScheduleNoticeContent(
         }
         if (station != null) {
             val lineArgb = LineColors.colorFor(station.line).toArgb()
-            val toMini = { t: EstimatedTrain ->
-                MiniTrain(t.lat, t.lng, lineArgb, ctx.getString(R.string.tren_estimado_a, t.destination), t.headingEast)
+            // Keyed by trip so a train glides between refreshes, even when it moves from the
+            // nearby list to the rest of the line; without a trip id, its index is the fallback.
+            val toMini = { t: EstimatedTrain, fallback: String ->
+                MiniTrain(
+                    t.lat, t.lng, lineArgb, ctx.getString(R.string.tren_estimado_a, t.destination), t.headingEast,
+                    key = "est:${t.tripId.ifBlank { fallback }}",
+                )
             }
             // Nearby trains drive the auto-zoom; the rest of the line shows up when zooming out.
-            val estTrains = board.estimatedTrains.map(toMini)
+            val estTrains = board.estimatedTrains.mapIndexed { i, t -> toMini(t, "near$i") }
             val lineEstTrains = lineEstimated
                 .filter { t -> board.estimatedTrains.none { it.lat == t.lat && it.lng == t.lng } }
-                .map(toMini)
+                .mapIndexed { i, t -> toMini(t, "line$i") }
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -763,5 +768,6 @@ private fun Arrival.toMiniTrain(ctx: android.content.Context, lineStations: List
         LineColors.colorFor(line).toArgb(),
         ctx.getString(R.string.tren_a, destination),
         headingEast = destLng?.let { it >= lng } ?: true,
+        key = "live:$serviceId",
     )
 }
