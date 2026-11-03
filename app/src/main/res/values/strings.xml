@@ -135,6 +135,7 @@
     <string name="estas_aca">Estás acá</string>
     <string name="pill_en_vivo">%1$s · %2$d en vivo</string>
     <string name="pill_sin_vivo">%1$s · %2$d estaciones · sin vivo</string>
+    <string name="pill_estimados">%1$s · %2$d estimados por horario</string>
     <string name="pill_ecobici">Ecobici · %1$d estaciones</string>
     <string name="bike_info">%1$s: %2$d bicis · %3$d anclajes</string>
 

@@ -124,6 +124,7 @@
     <string name="estas_aca">You\'re here</string>
     <string name="pill_en_vivo">%1$s · %2$d live</string>
     <string name="pill_sin_vivo">%1$s · %2$d stations · no live</string>
+    <string name="pill_estimados">%1$s · %2$d estimated from timetable</string>
     <string name="pill_ecobici">Ecobici · %1$d stations</string>
     <string name="bike_info">%1$s: %2$d bikes · %3$d docks</string>
 
