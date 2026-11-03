@@ -1,4 +1,4 @@
-package ar.trenar.app.ui.mapa
+package ar.trenar.app.ui.common
 
 import android.graphics.drawable.Drawable
 import org.osmdroid.util.GeoPoint
