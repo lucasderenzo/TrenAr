@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="sin-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,7 +22,7 @@
           <a href="#funciones" data-i18n="nav.funciones">Funciones</a>
           <a href="#instalar" data-i18n="nav.instalar">Instalar</a>
           <a href="#historia" data-i18n="nav.historia">Cómo se hizo</a>
-          <div class="lang">
+          <div class="lang" role="group" data-i18n-aria-label="nav.idioma" aria-label="Idioma">
             <button type="button" class="idioma on" data-idioma="es" aria-pressed="true">ES</button>
             <button type="button" class="idioma" data-idioma="en" aria-pressed="false">EN</button>
             <button type="button" class="idioma" data-idioma="pt" aria-pressed="false">PT</button>
@@ -37,7 +37,7 @@
     <div class="wrap hero-grid">
       <div>
         <h1 data-i18n-html="hero.titulo">¿Cuándo llega <em>tu tren?</em></h1>
-        <p data-i18n="hero.bajada">Arribos segundo a segundo, demoras reales y cada tren en el mapa. Gratis y sin publicidad.</p>
+        <p class="bajada" data-i18n="hero.bajada">Arribos segundo a segundo, demoras reales y cada tren en el mapa. Gratis y sin publicidad.</p>
         <a class="btn" href="https://github.com/lucasderenzo/TrenAr/releases/latest/download/TrenAr.apk"><span><span aria-hidden="true">⬇</span> <span data-i18n="hero.descargar">Descargar APK</span></span><small data-i18n="hero.requisito">Android 8.0 o superior</small></a>
         <p class="meta"><span id="version-descarga" data-i18n="hero.version">Versión 1.22.0 · ~22 MB</span></p>
       </div>
@@ -77,7 +77,7 @@
       <div class="steps">
         <div class="step"><b>1</b><strong data-i18n="inst.p1.titulo">Descargá</strong><br><span data-i18n="inst.p1.texto">Tocá el botón desde tu Android.</span></div>
         <div class="step"><b>2</b><strong data-i18n="inst.p2.titulo">Abrí el archivo</strong><br><span data-i18n="inst.p2.texto">En Descargas o en la notificación.</span></div>
-        <div class="step"><b>3</b><strong data-i18n="inst.p3.titulo">Permití</strong><br><span data-i18n="inst.p3.texto">“Instalar desde esta fuente”.</span></div>
+        <div class="step"><b>3</b><strong data-i18n="inst.p3.titulo">Permití</strong><br><span data-i18n="inst.p3.texto">“Permitir desde esta fuente”.</span></div>
         <div class="step"><b>4</b><strong data-i18n="inst.p4.titulo">¡A viajar!</strong><br><span data-i18n="inst.p4.texto">Dale permiso de ubicación.</span></div>
       </div>
       <p class="cierre"><a class="btn" href="https://github.com/lucasderenzo/TrenAr/releases/latest/download/TrenAr.apk"><span><span aria-hidden="true">⬇</span> <span data-i18n="hero.descargar">Descargar APK</span></span><small data-i18n="hero.requisito">Android 8.0 o superior</small></a></p>
@@ -91,7 +91,7 @@
       <div class="sec-head"><span class="sec-n">03</span><span class="kicker" data-i18n="hist.kicker">Cómo se hizo</span></div>
       <h2 data-i18n="hist.titulo">De la idea a la 1.22 en 5 semanas.</h2>
       <p class="sub" data-i18n="hist.bajada">Cada estación es una versión.</p>
-      <ol id="linea-tiempo" class="tl">
+      <ol id="linea-tiempo" class="tl" role="list">
         <li class="stop hito"><span class="v">1.0</span><span class="d">30 sep</span><p>Primera versión: arribos en vivo, estaciones cercanas y favoritas.</p></li>
         <li class="stop hito"><span class="v">1.1</span><span class="d">30 sep</span><p>Barra de cinco pestañas, mapa de la red en vivo y alertas.</p></li>
         <li class="stop hito"><span class="v">1.2.0</span><span class="d">1 oct</span><p>Ecobici en vivo en el mapa.</p></li>
@@ -102,7 +102,7 @@
         <li class="stop hito"><span class="v">1.17.0</span><span class="d">28 oct</span><p>La línea entera, con estaciones y trenes, en el mapa de cada estación.</p></li>
         <li class="stop hito"><span class="v">1.22.0</span><span class="d">3 nov</span><p>La estación se actualiza cada 10 segundos, como el mapa en vivo.</p></li>
       </ol>
-      <button type="button" class="more" id="ver-todas" data-i18n="hist.ver_todas">Ver todas las versiones ▾</button>
+      <button type="button" class="more" id="ver-todas" aria-expanded="false" data-i18n="hist.ver_todas">Ver todas las versiones</button>
     </div>
   </section>
 

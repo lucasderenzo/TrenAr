@@ -31,7 +31,8 @@ function documentoFalso() {
   const botones = ["es", "en", "pt"].map((l) => elemento({ class: "idioma", "data-idioma": l, "aria-pressed": "false" }));
   const lista = elemento({ id: "linea-tiempo" });
   const verTodas = elemento({ id: "ver-todas", "data-i18n": "hist.ver_todas" });
-  const todos = [version, meta, ...botones, lista, verTodas];
+  const grupo = elemento({ "data-i18n-aria-label": "nav.idioma", "aria-label": "Idioma" });
+  const todos = [version, meta, grupo, ...botones, lista, verTodas];
   const porSelector = {
     "*": todos,
     "[data-i18n]": [version, verTodas],
@@ -41,7 +42,7 @@ function documentoFalso() {
     "#ver-todas": [verTodas],
   };
   return {
-    version, meta, botones, lista, verTodas,
+    version, meta, grupo, botones, lista, verTodas,
     documentElement: elemento({ lang: "es" }),
     querySelectorAll: (s) => porSelector[s] || [],
     querySelector: (s) => (porSelector[s] || [])[0] || null,
@@ -57,8 +58,14 @@ test("aplicarIdioma traduce textos, atributos y botones", () => {
   assert.equal(doc.documentElement.getAttribute("lang"), "en");
 });
 
-test("montarLineaTiempo arma los 32 hitos", () => {
+test("montarLineaTiempo arma las 32 entradas", () => {
   const doc = documentoFalso();
   lt.montarLineaTiempo(doc, "es");
   assert.equal((doc.lista.innerHTML.match(/<li/g) || []).length, 32);
+});
+
+test("aplicarIdioma traduce atributos con guión como aria-label", () => {
+  const doc = documentoFalso();
+  idioma.aplicarIdioma(doc, "en");
+  assert.equal(doc.grupo.getAttribute("aria-label"), "Language");
 });

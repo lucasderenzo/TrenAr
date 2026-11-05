@@ -1,7 +1,7 @@
 /* Estilos de la web de TrenAr. Salen del boceto v3 aprobado. */
 :root { --navy:#0A1B30; --navy2:#14345C; --blue:#1E5AA8; --celeste:#4A90D9; --cyan:#37C2FF; --amber:#FFC53D; --paper:#F6F8FC; --tint:#E6EEF8; --ink:#11161D; --ink2:#44505E; --line:#C9D4E3; }
 * { box-sizing:border-box; margin:0; padding:0; }
-html { scroll-behavior:smooth; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth; } }
 body { font-family:Inter,system-ui,sans-serif; background:var(--paper); color:var(--ink); line-height:1.5; overflow-x:hidden; }
 img { display:block; max-width:100%; height:auto; }
 a { color:inherit; text-decoration:none; }
@@ -23,13 +23,15 @@ nav { display:flex; justify-content:space-between; align-items:center; gap:12px;
 .lang { display:flex; border:1px solid #ffffff35; border-radius:999px; overflow:hidden; font-size:.85rem; font-weight:600; }
 .idioma { background:none; border:0; color:inherit; font:inherit; padding:6px 12px; cursor:pointer; }
 .idioma.on { background:#fff; color:var(--navy); }
+.idioma:focus-visible { outline:2px solid var(--amber); outline-offset:-3px; }
+.sin-js .lang, .sin-js #ver-todas { display:none; }
 
 /* ===== Portada ===== */
 .hero { position:relative; background:linear-gradient(160deg,var(--navy2),#0F2440 75%); color:#fff; padding:56px 0 96px; overflow:hidden; }
 .hero-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:32px; align-items:center; }
 .hero h1 { font-weight:900; font-size:clamp(2.2rem,5vw,3.8rem); line-height:1; margin-bottom:16px; }
 .hero h1 em { font-style:normal; color:var(--amber); }
-.hero p { color:#C9D6E6; max-width:34ch; }
+.hero .bajada { color:#C9D6E6; max-width:34ch; }
 .btn { display:inline-flex; flex-direction:column; margin-top:24px; background:var(--amber); color:var(--navy); font-family:Archivo; font-weight:800; font-size:1.1rem; padding:14px 24px; border-radius:14px; }
 .btn small { font-family:Inter; font-weight:600; font-size:.75rem; opacity:.75; }
 .btn:hover { filter:brightness(1.06); }
@@ -81,6 +83,8 @@ section[id] { scroll-margin-top:8px; }
 #linea-tiempo.abierta .oculta { display:block; }
 .more { margin-left:18px; display:inline-block; background:none; color:inherit; font:inherit; border:1px solid #fff; font-weight:600; padding:8px 16px; border-radius:999px; font-size:.9rem; cursor:pointer; }
 .more:hover { background:#ffffff1a; }
+#ver-todas::after { content:" ▾"; }
+#ver-todas[aria-expanded="true"]::after { content:" ▴"; }
 
 /* ===== Footer ===== */
 footer { background:var(--navy); color:#9FB3CA; font-size:.88rem; padding:36px 0 32px; border-top:4px solid var(--amber); }
@@ -114,7 +118,7 @@ footer .right { text-align:right; }
 @media (max-width:760px) {
   .hero-grid, .feat, footer .wrap { grid-template-columns:1fr; text-align:center; }
   footer .right { text-align:center; }
-  .hero p { margin:auto; }
+  .hero .bajada { margin:auto; }
   .btn { display:flex; align-items:center; width:100%; margin-top:24px; }
   .cards, .steps { grid-template-columns:1fr 1fr; }
   .navlinks a { display:none; }

@@ -40,3 +40,13 @@ test("la última coincide con la app", () => {
   const app = gradle.match(/versionName = "([^"]+)"/)[1];
   assert.equal(VERSIONES.at(-1).version, app);
 });
+
+test("terminología unificada y nombres de la app (revisión final)", () => {
+  const de = (v) => VERSIONES.find((x) => x.version === v).texto;
+  assert.match(de("1.14.0").en, /terminals/);
+  assert.match(de("1.14.0").pt, /terminais/);
+  assert.equal(de("1.15.0").pt, "Botão de sugestões e problemas.");
+  assert.match(de("1.9.0").en, /“Directions”/);
+  assert.match(de("1.9.0").pt, /“Como chegar”/);
+  assert.doesNotMatch(de("1.1.1").en, /accents/);
+});

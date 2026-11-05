@@ -67,10 +67,12 @@ function aplicarIdioma(doc, idioma) {
 // Arranque en el navegador. En Node (pruebas) no hay document y no corre.
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
+    // Hay JavaScript: se muestran los controles que dependen de él.
+    document.documentElement.classList.remove("sin-js");
     // Acceder a localStorage puede tirar error (modo privado): se sigue sin recordar.
     let almacen = null;
     try { almacen = window.localStorage; } catch { almacen = null; }
-    aplicarIdioma(document, elegirIdioma(leerIdiomaGuardado(almacen), navigator.languages || navigator.language));
+    aplicarIdioma(document, elegirIdioma(leerIdiomaGuardado(almacen), (navigator.languages && navigator.languages.length) ? navigator.languages : navigator.language));
 
     document.querySelectorAll(".idioma").forEach((boton) => {
       boton.addEventListener("click", () => {
