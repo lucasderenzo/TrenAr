@@ -63,4 +63,17 @@ function htmlLineaTiempo(versiones, idioma) {
     .join("\n");
 }
 
-if (typeof module !== "undefined") module.exports = { formatearFecha, versionCorta, ultimaVersion, semanasEntre, completar, htmlLineaTiempo };
+// Rearma la lista de #linea-tiempo en el idioma dado y ajusta el botón #ver-todas
+// (texto y aria-expanded) según esté abierta o no. Usa TEXTOS y VERSIONES globales.
+function montarLineaTiempo(doc, idioma) {
+  const lista = doc.querySelector("#linea-tiempo");
+  const boton = doc.querySelector("#ver-todas");
+  if (lista) lista.innerHTML = htmlLineaTiempo(VERSIONES, idioma);
+  if (lista && boton) {
+    const abierta = lista.classList.contains("abierta");
+    boton.textContent = TEXTOS[idioma][abierta ? "hist.ver_menos" : "hist.ver_todas"];
+    boton.setAttribute("aria-expanded", String(abierta));
+  }
+}
+
+if (typeof module !== "undefined") module.exports = { formatearFecha, versionCorta, ultimaVersion, semanasEntre, completar, htmlLineaTiempo, montarLineaTiempo };
