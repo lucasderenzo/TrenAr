@@ -20,3 +20,6 @@ keystore.properties
 # APK / bundle outputs (adjuntá el APK a un GitHub Release en vez de versionarlo)
 *.apk
 *.aab
+
+# Bocetos de brainstorming (superpowers)
+.superpowers/
