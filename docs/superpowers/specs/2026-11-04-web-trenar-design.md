@@ -49,7 +49,7 @@ De arriba hacia abajo:
 6. **Sección 02 · Instalación** (fondo celeste claro `#E6EEF8`): cuatro pasos (Descargá → Abrí el archivo → Permití la instalación → ¡A viajar!).
 7. **Vía separadora** con un tren que va hacia la izquierda.
 8. **Sección 03 · Cómo se hizo** (fondo azul `#14345C`, texto claro):
-   - Título "De la idea a la 1.22 en cinco semanas" (el número sale de los datos).
+   - Título "De la idea a la 1.22 en 5 semanas" (versión y semanas salen de los datos).
    - Línea de tiempo vertical dibujada como vía, con cada versión como estación. Los hitos van con borde amarillo.
    - Botón **Ver todas las versiones** que despliega el resto.
 9. **Footer.** Bloque azul oscuro con borde superior amarillo: logo, aviso "app no oficial… verificá siempre en el andén" y "Hecha por Lucas De Renzo + Claude · © 2026".
@@ -109,7 +109,8 @@ Todo en `docs/`. Reemplaza la web anterior (`docs/index.html` y `docs/img/`, sin
   - 1.22.0 (estación que se actualiza cada 10 s, como el mapa en vivo)
 
   El resto aparece con "Ver todas las versiones".
-- **Fechas:** se muestran en formato corto, según el idioma (`Intl.DateTimeFormat`), por ejemplo "30 sep" / "Sep 30" / "30 set".
+- **Fechas:** se muestran en formato corto, según el idioma: "30 sep" / "Sep 30" / "30 set". Se arman con tablas de meses propias, no con `Intl`, porque `Intl` da "sept" en algunos motores.
+- **Título:** "De la idea a la {versión corta} en {semanas} semanas", con los dos valores calculados de los datos (hoy: "1.22" y 5).
 - **Botón de descarga:** "Versión X" usa la `version` de la **última** entrada.
 
 ## 8. Descarga de la APK
@@ -126,7 +127,7 @@ Todo en `docs/`. Reemplaza la web anterior (`docs/index.html` y `docs/img/`, sin
   - Estación con arribos y cuenta regresiva (Once/Sarmiento), que va en la portada y en "Cuenta regresiva".
   - Mapa de red en vivo con trenes.
   - "¡Salí ya!" (requiere ubicación cerca de la estación).
-- Se guardan en `docs/img/` como PNG de 1080×2400, optimizadas.
+- Se guardan en `docs/img/` como PNG de 1080×2400.
 - Hasta tenerlas, la página muestra lugares reservados. La tarea de capturas es independiente del resto.
 
 ## 10. Pruebas
