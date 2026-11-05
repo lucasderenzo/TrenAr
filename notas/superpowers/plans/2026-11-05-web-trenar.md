@@ -11,7 +11,7 @@
 
 **Stack:** HTML + CSS + JavaScript sin frameworks. Pruebas con `node --test` (Node 26). Tipografías Archivo e Inter de Google Fonts.
 
-**Especificación:** `docs/superpowers/specs/2026-11-04-web-trenar-design.md` (leerla entera antes de empezar).
+**Especificación:** `notas/superpowers/specs/2026-11-04-web-trenar-design.md` (leerla entera antes de empezar).
 
 ## Restricciones globales
 

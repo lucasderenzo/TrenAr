@@ -69,6 +69,8 @@ Cada sección tiene un encabezado con número (`01`, `02`, `03` en recuadro amar
 
 Todo en `docs/`. Reemplaza la web anterior (`docs/index.html` y `docs/img/`, sin commitear, se borran).
 
+Los documentos de diseño viven en `notas/superpowers/`, fuera de `docs/`, para que Pages no los publique.
+
 | Archivo | Responsabilidad |
 |---|---|
 | `docs/index.html` | Estructura y textos en **español** escritos en el HTML. Cada texto traducible lleva `data-i18n="clave"`. |
