@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="meta.titulo">TrenAr · Llegadas de trenes en vivo</title>
+<meta name="description" data-i18n-content="meta.descripcion" content="App gratuita y sin publicidad para saber cuándo llega tu tren en Buenos Aires: arribos segundo a segundo, demoras reales y cada tren en el mapa.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20108%20108%22%3E%3Crect%20width%3D%22108%22%20height%3D%22108%22%20fill%3D%22%2314345C%22%2F%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M42%2C28h24c7.2%2C0%2013%2C5.8%2013%2C13v27c0%2C4.4%20-3.6%2C8%20-8%2C8h-34c-4.4%2C0%20-8%2C-3.6%20-8%2C-8v-27c0%2C-7.2%205.8%2C-13%2013%2C-13z%22%2F%3E%3Cpath%20fill%3D%22%2337C2FF%22%20d%3D%22M40%2C40h28v14h-28z%22%2F%3E%3Cpath%20fill%3D%22%2314345C%22%20d%3D%22M52.4%2C40h3.2v14h-3.2z%22%2F%3E%3Ccircle%20cx%3D%2241%22%20cy%3D%2260%22%20r%3D%223%22%20fill%3D%22%23FFC53D%22%2F%3E%3Ccircle%20cx%3D%2267%22%20cy%3D%2260%22%20r%3D%223%22%20fill%3D%22%23FFC53D%22%2F%3E%3Cpath%20fill%3D%22%230A1B30%22%20d%3D%22M35%2C68h38v4h-38z%22%2F%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M40%2C80l-6%2C10h5l6%2C-10z%22%2F%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M68%2C80l6%2C10h-5l-6%2C-10z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- ENCABEZADO -->
+  <header class="header">
+    <div class="wrap">
+      <nav>
+        <div class="brand"><svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" fill="#14345C"/><path fill="#fff" d="M42,28h24c7.2,0 13,5.8 13,13v27c0,4.4 -3.6,8 -8,8h-34c-4.4,0 -8,-3.6 -8,-8v-27c0,-7.2 5.8,-13 13,-13z"/><path fill="#37C2FF" d="M40,40h28v14h-28z"/><path fill="#14345C" d="M52.4,40h3.2v14h-3.2z"/><circle cx="41" cy="60" r="3" fill="#FFC53D"/><circle cx="67" cy="60" r="3" fill="#FFC53D"/><path fill="#0A1B30" d="M35,68h38v4h-38z"/><path fill="#fff" d="M40,80l-6,10h5l6,-10z"/><path fill="#fff" d="M68,80l6,10h-5l-6,-10z"/></svg><span>Tren<b>Ar</b></span></div>
+        <div class="navlinks">
+          <a href="#funciones" data-i18n="nav.funciones">Funciones</a>
+          <a href="#instalar" data-i18n="nav.instalar">Instalar</a>
+          <a href="#historia" data-i18n="nav.historia">Cómo se hizo</a>
+          <div class="lang">
+            <button type="button" class="idioma on" data-idioma="es" aria-pressed="true">ES</button>
+            <button type="button" class="idioma" data-idioma="en" aria-pressed="false">EN</button>
+            <button type="button" class="idioma" data-idioma="pt" aria-pressed="false">PT</button>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PORTADA -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1 data-i18n-html="hero.titulo">¿Cuándo llega <em>tu tren?</em></h1>
+        <p data-i18n="hero.bajada">Arribos segundo a segundo, demoras reales y cada tren en el mapa. Gratis y sin publicidad.</p>
+        <a class="btn" href="https://github.com/lucasderenzo/TrenAr/releases/latest/download/TrenAr.apk"><span><span aria-hidden="true">⬇</span> <span data-i18n="hero.descargar">Descargar APK</span></span><small data-i18n="hero.requisito">Android 8.0 o superior</small></a>
+        <p class="meta"><span id="version-descarga" data-i18n="hero.version">Versión 1.22.0 · ~22 MB</span></p>
+      </div>
+      <div class="phone"><div class="shot-ph"><div><b>📱</b>Captura nueva<br>Estación con arribos</div></div></div>
+    </div>
+    <div class="hero-track"><svg viewBox="0 0 240 30" aria-hidden="true"><g fill="#ffffffcc"><rect x="0" y="4" width="70" height="22" rx="6"/><rect x="76" y="4" width="70" height="22" rx="6"/><path d="M152 4h66c12 0 20 8 20 18v4h-86z"/></g><g fill="#37C2FF"><rect x="8" y="9" width="12" height="8" rx="2"/><rect x="26" y="9" width="12" height="8" rx="2"/><rect x="44" y="9" width="12" height="8" rx="2"/><rect x="84" y="9" width="12" height="8" rx="2"/><rect x="102" y="9" width="12" height="8" rx="2"/><rect x="120" y="9" width="12" height="8" rx="2"/><rect x="160" y="9" width="12" height="8" rx="2"/><rect x="178" y="9" width="12" height="8" rx="2"/><rect x="200" y="9" width="24" height="8" rx="2"/></g><circle cx="232" cy="20" r="2.5" fill="#FFC53D"/></svg></div>
+  </div>
+  <div class="lines-band"><i style="background:#0EA5E0"></i><i style="background:#D6007E"></i><i style="background:#2E9E5B"></i><i style="background:#F57C00"></i><i style="background:#F9A825"></i><i style="background:#8E24AA"></i><i style="background:#00ACC1"></i><i style="background:#26A69A"></i></div>
+
+  <!-- FUNCIONES -->
+  <section id="funciones" class="s-light">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-n">01</span><span class="kicker" data-i18n="func.kicker">Lo que hace</span></div>
+      <h2 data-i18n="func.titulo">Todo antes de salir de casa.</h2>
+      <div class="feat">
+        <div><div class="phone"><div class="shot-ph"><div><b>⏱️</b>Captura nueva<br>Cuenta regresiva</div></div></div><h3 data-i18n="func.cuenta.titulo">Cuenta regresiva</h3><p data-i18n="func.cuenta.texto">Anillo que baja segundo a segundo, con demoras reales.</p></div>
+        <div><div class="phone"><div class="shot-ph"><div><b>🗺️</b>Captura nueva<br>Mapa con trenes</div></div></div><h3 data-i18n="func.mapa.titulo">El tren en el mapa</h3><p data-i18n="func.mapa.texto">Cada formación en vivo, moviéndose en el mapa.</p></div>
+        <div><div class="phone"><div class="shot-ph"><div><b>🏃</b>Captura nueva<br>“¡Salí ya!”</div></div></div><h3 data-i18n="func.salir.titulo">“¡Salí ya!”</h3><p data-i18n="func.salir.texto">Te avisa cuándo salir según lo que tardás caminando.</p></div>
+      </div>
+      <div class="cards">
+        <div class="card"><strong data-i18n="tarjeta.cercanas.titulo">📍 Cercanas</strong><span data-i18n="tarjeta.cercanas.texto">Por GPS o escribiendo tu dirección.</span></div>
+        <div class="card"><strong data-i18n="tarjeta.favoritas.titulo">⭐ Favoritas</strong><span data-i18n="tarjeta.favoritas.texto">Tus estaciones a un toque.</span></div>
+        <div class="card"><strong data-i18n="tarjeta.alertas.titulo">🔔 Alertas</strong><span data-i18n="tarjeta.alertas.texto">Demoras y cancelaciones.</span></div>
+        <div class="card"><strong data-i18n="tarjeta.widget.titulo">📌 Widget</strong><span data-i18n="tarjeta.widget.texto">Próximos trenes en el inicio.</span></div>
+        <div class="card"><strong data-i18n="tarjeta.ecobici.titulo">🚲 Ecobici</strong><span data-i18n="tarjeta.ecobici.texto">Bicis cerca de la estación.</span></div>
+        <div class="card"><strong data-i18n="tarjeta.oscuro.titulo">🌙 Modo oscuro</strong><span data-i18n="tarjeta.oscuro.texto">Y en ES / EN / PT.</span></div>
+      </div>
+    </div>
+  </section>
+  <div class="rail" style="--bg:#fff"><svg viewBox="0 0 240 30" aria-hidden="true"><g fill="#14345C"><rect x="0" y="4" width="70" height="22" rx="6"/><rect x="76" y="4" width="70" height="22" rx="6"/><path d="M152 4h66c12 0 20 8 20 18v4h-86z"/></g><g fill="#37C2FF"><rect x="8" y="9" width="12" height="8" rx="2"/><rect x="26" y="9" width="12" height="8" rx="2"/><rect x="44" y="9" width="12" height="8" rx="2"/><rect x="84" y="9" width="12" height="8" rx="2"/><rect x="102" y="9" width="12" height="8" rx="2"/><rect x="120" y="9" width="12" height="8" rx="2"/><rect x="160" y="9" width="12" height="8" rx="2"/><rect x="178" y="9" width="12" height="8" rx="2"/><rect x="200" y="9" width="24" height="8" rx="2"/></g><circle cx="232" cy="20" r="2.5" fill="#FFC53D"/></svg></div>
+
+  <!-- INSTALAR -->
+  <section id="instalar" class="s-tint">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-n">02</span><span class="kicker" data-i18n="inst.kicker">Instalación</span></div>
+      <h2 data-i18n="inst.titulo">Lista en un minuto.</h2>
+      <div class="steps">
+        <div class="step"><b>1</b><strong data-i18n="inst.p1.titulo">Descargá</strong><br><span data-i18n="inst.p1.texto">Tocá el botón desde tu Android.</span></div>
+        <div class="step"><b>2</b><strong data-i18n="inst.p2.titulo">Abrí el archivo</strong><br><span data-i18n="inst.p2.texto">En Descargas o en la notificación.</span></div>
+        <div class="step"><b>3</b><strong data-i18n="inst.p3.titulo">Permití</strong><br><span data-i18n="inst.p3.texto">“Instalar desde esta fuente”.</span></div>
+        <div class="step"><b>4</b><strong data-i18n="inst.p4.titulo">¡A viajar!</strong><br><span data-i18n="inst.p4.texto">Dale permiso de ubicación.</span></div>
+      </div>
+      <p class="cierre"><a class="btn" href="https://github.com/lucasderenzo/TrenAr/releases/latest/download/TrenAr.apk"><span><span aria-hidden="true">⬇</span> <span data-i18n="hero.descargar">Descargar APK</span></span><small data-i18n="hero.requisito">Android 8.0 o superior</small></a></p>
+    </div>
+  </section>
+  <div class="rail rev" style="--bg:var(--tint)"><svg viewBox="0 0 240 30" aria-hidden="true"><g fill="#14345C"><rect x="0" y="4" width="70" height="22" rx="6"/><rect x="76" y="4" width="70" height="22" rx="6"/><path d="M152 4h66c12 0 20 8 20 18v4h-86z"/></g><g fill="#37C2FF"><rect x="8" y="9" width="12" height="8" rx="2"/><rect x="26" y="9" width="12" height="8" rx="2"/><rect x="44" y="9" width="12" height="8" rx="2"/><rect x="84" y="9" width="12" height="8" rx="2"/><rect x="102" y="9" width="12" height="8" rx="2"/><rect x="120" y="9" width="12" height="8" rx="2"/><rect x="160" y="9" width="12" height="8" rx="2"/><rect x="178" y="9" width="12" height="8" rx="2"/><rect x="200" y="9" width="24" height="8" rx="2"/></g><circle cx="232" cy="20" r="2.5" fill="#FFC53D"/></svg></div>
+
+  <!-- CÓMO SE HIZO -->
+  <section id="historia" class="s-dark">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-n">03</span><span class="kicker" data-i18n="hist.kicker">Cómo se hizo</span></div>
+      <h2 data-i18n="hist.titulo">De la idea a la 1.22 en 5 semanas.</h2>
+      <p class="sub" data-i18n="hist.bajada">Cada estación es una versión.</p>
+      <ol id="linea-tiempo" class="tl">
+        <li class="stop hito"><span class="v">1.0</span><span class="d">30 sep</span><p>Primera versión: arribos en vivo, estaciones cercanas y favoritas.</p></li>
+        <li class="stop hito"><span class="v">1.1</span><span class="d">30 sep</span><p>Barra de cinco pestañas, mapa de la red en vivo y alertas.</p></li>
+        <li class="stop hito"><span class="v">1.2.0</span><span class="d">1 oct</span><p>Ecobici en vivo en el mapa.</p></li>
+        <li class="stop hito"><span class="v">1.3.0</span><span class="d">1 oct</span><p>Seguir un tren con cuenta regresiva y “¡Salí ya!”.</p></li>
+        <li class="stop hito"><span class="v">1.5.0</span><span class="d">2 oct</span><p>Llegan Urquiza y Belgrano Norte, y “mi ubicación” en el mapa.</p></li>
+        <li class="stop hito"><span class="v">1.8.0</span><span class="d">13 oct</span><p>Horarios exactos de Urquiza desde el PDF oficial.</p></li>
+        <li class="stop hito"><span class="v">1.13.0</span><span class="d">14 oct</span><p>En español, inglés y portugués.</p></li>
+        <li class="stop hito"><span class="v">1.17.0</span><span class="d">28 oct</span><p>La línea entera, con estaciones y trenes, en el mapa de cada estación.</p></li>
+        <li class="stop hito"><span class="v">1.22.0</span><span class="d">3 nov</span><p>La estación se actualiza cada 10 segundos, como el mapa en vivo.</p></li>
+      </ol>
+      <button type="button" class="more" id="ver-todas" data-i18n="hist.ver_todas">Ver todas las versiones ▾</button>
+    </div>
+  </section>
+
+  <!-- PIE -->
+  <footer>
+    <div class="wrap">
+      <div><strong>Tren<span style="color:var(--celeste)">Ar</span></strong><br><span data-i18n="pie.aviso">App no oficial, sin fines comerciales. Usa datos de Trenes Argentinos. Verificá siempre en el andén.</span></div>
+      <div class="right" data-i18n="pie.creditos">Hecha por Lucas De Renzo + Claude · © 2026</div>
+    </div>
+  </footer>
+
+<script src="js/textos.js"></script>
+<script src="js/versiones.js"></script>
+<script src="js/idioma.js"></script>
+<script src="js/linea-tiempo.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+/* Estilos de la web de TrenAr. Salen del boceto v3 aprobado. */
+:root { --navy:#0A1B30; --navy2:#14345C; --blue:#1E5AA8; --celeste:#4A90D9; --cyan:#37C2FF; --amber:#FFC53D; --paper:#F6F8FC; --tint:#E6EEF8; --ink:#11161D; --ink2:#44505E; --line:#C9D4E3; }
+* { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body { font-family:Inter,system-ui,sans-serif; background:var(--paper); color:var(--ink); line-height:1.5; overflow-x:hidden; }
+img { display:block; max-width:100%; height:auto; }
+a { color:inherit; text-decoration:none; }
+.wrap { width:min(980px, 100% - 32px); margin-inline:auto; }
+h1,h2,h3 { font-family:Archivo,sans-serif; letter-spacing:-.02em; }
+
+/* ===== Franja con los colores de las líneas ===== */
+.lines-band { display:flex; height:8px; }
+.lines-band i { flex:1; }
+
+/* ===== Header ===== */
+.header { background:var(--navy); color:#fff; border-bottom:4px solid var(--amber); }
+nav { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 0; }
+.brand { display:flex; gap:10px; align-items:center; font-family:Archivo; font-weight:800; font-size:1.3rem; }
+.brand svg { width:34px; height:34px; border-radius:9px; flex:none; }
+.brand b { color:var(--celeste); }
+.navlinks { display:flex; gap:20px; align-items:center; font-size:.9rem; color:#C9D6E6; }
+.navlinks a:hover { color:#fff; }
+.lang { display:flex; border:1px solid #ffffff35; border-radius:999px; overflow:hidden; font-size:.85rem; font-weight:600; }
+.idioma { background:none; border:0; color:inherit; font:inherit; padding:6px 12px; cursor:pointer; }
+.idioma.on { background:#fff; color:var(--navy); }
+
+/* ===== Portada ===== */
+.hero { position:relative; background:linear-gradient(160deg,var(--navy2),#0F2440 75%); color:#fff; padding:56px 0 96px; overflow:hidden; }
+.hero-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:32px; align-items:center; }
+.hero h1 { font-weight:900; font-size:clamp(2.2rem,5vw,3.8rem); line-height:1; margin-bottom:16px; }
+.hero h1 em { font-style:normal; color:var(--amber); }
+.hero p { color:#C9D6E6; max-width:34ch; }
+.btn { display:inline-flex; flex-direction:column; margin-top:24px; background:var(--amber); color:var(--navy); font-family:Archivo; font-weight:800; font-size:1.1rem; padding:14px 24px; border-radius:14px; }
+.btn small { font-family:Inter; font-weight:600; font-size:.75rem; opacity:.75; }
+.btn:hover { filter:brightness(1.06); }
+.meta { margin-top:10px; font-size:.85rem; color:#9FB3CA; }
+
+.phone { width:min(240px,70vw); margin:auto; padding:8px; border-radius:32px; background:#050C16; box-shadow:0 0 0 1px #ffffff1a, 0 30px 60px -20px #000a; }
+.shot-ph { aspect-ratio:9/20; border-radius:25px; background:repeating-linear-gradient(135deg,#eef2f8 0 14px,#e2e8f1 14px 28px); display:grid; place-items:center; text-align:center; color:var(--ink2); font-size:.82rem; font-weight:600; padding:16px; }
+.shot-ph b { display:block; font-size:1.4rem; margin-bottom:6px; }
+
+/* ===== Secciones con fondo propio y encabezado numerado ===== */
+section { padding:64px 0; }
+.s-light { background:#fff; }
+.s-tint { background:var(--tint); }
+.s-dark { background:var(--navy2); color:#fff; }
+.s-dark .sub, .s-dark p { color:#C9D6E6; }
+.sec-head { display:flex; align-items:baseline; gap:14px; border-bottom:2px solid var(--line); padding-bottom:14px; margin-bottom:8px; }
+.s-dark .sec-head { border-color:#ffffff30; }
+.sec-n { font-family:Archivo; font-weight:900; font-size:.9rem; background:var(--amber); color:var(--navy); border-radius:8px; padding:3px 9px; }
+.kicker { font-family:Archivo; font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.12em; color:var(--blue); }
+.s-dark .kicker { color:var(--cyan); }
+h2 { font-size:clamp(1.7rem,3.6vw,2.5rem); line-height:1.1; margin:14px 0 10px; }
+.sub { color:var(--ink2); }
+section[id] { scroll-margin-top:8px; }
+
+.feat { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:36px; }
+.feat .phone { width:100%; max-width:190px; box-shadow:0 20px 40px -20px #0A1B3066; }
+.feat h3 { margin:16px 0 6px; font-size:1.2rem; text-align:center; }
+.feat p { color:var(--ink2); font-size:.92rem; text-align:center; }
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:32px; }
+.card { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.card strong { display:block; font-family:Archivo; }
+.card span { color:var(--ink2); font-size:.88rem; }
+
+.steps { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:28px; }
+.step { border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff; }
+.step b { width:34px; height:34px; border-radius:50%; background:var(--amber); display:grid; place-items:center; font-family:Archivo; margin-bottom:10px; }
+.step span { color:var(--ink2); font-size:.9rem; }
+.cierre { text-align:center; }
+
+/* ===== Línea de tiempo: la vía con una estación por versión ===== */
+.tl { position:relative; list-style:none; margin-top:36px; padding-left:36px; }
+.tl::before { content:""; position:absolute; left:11px; top:6px; bottom:6px; width:6px; border-radius:3px; background:repeating-linear-gradient(#fff 0 10px, var(--navy2) 10px 14px); box-shadow:0 0 0 2px #fff; }
+.stop { position:relative; padding:0 0 24px 18px; }
+.stop::before { content:""; position:absolute; left:-33px; top:2px; width:18px; height:18px; border-radius:50%; background:var(--navy2); border:4px solid #fff; }
+.stop.hito::before { border-color:var(--amber); }
+.stop .v { font-family:Archivo; font-weight:800; font-size:1.1rem; }
+.stop .d { font-size:.8rem; color:#9FB3CA; margin-left:8px; }
+.oculta { display:none; }
+#linea-tiempo.abierta .oculta { display:block; }
+.more { margin-left:18px; display:inline-block; background:none; color:inherit; font:inherit; border:1px solid #fff; font-weight:600; padding:8px 16px; border-radius:999px; font-size:.9rem; cursor:pointer; }
+.more:hover { background:#ffffff1a; }
+
+/* ===== Footer ===== */
+footer { background:var(--navy); color:#9FB3CA; font-size:.88rem; padding:36px 0 32px; border-top:4px solid var(--amber); }
+footer .wrap { display:grid; grid-template-columns:1.4fr 1fr; gap:24px; padding-top:20px; }
+footer strong { color:#fff; font-family:Archivo; font-size:1.1rem; }
+footer .right { text-align:right; }
+
+/* ===== Trenes animados sobre las vías =====
+   Las pistas llevan overflow:hidden; el tren se mueve con "left" relativo a la pista
+   (de -260px a 100%), así nunca ensancha la página. */
+.hero-track { position:absolute; left:0; right:0; bottom:18px; height:44px; overflow:hidden; pointer-events:none; }
+.hero-track::after { content:""; position:absolute; left:0; right:0; bottom:0; height:14px; background:
+    linear-gradient(#ffffff40,#ffffff40) top / 100% 2px no-repeat,
+    linear-gradient(#ffffff40,#ffffff40) bottom / 100% 2px no-repeat,
+    repeating-linear-gradient(90deg,#ffffff26 0 6px,transparent 6px 26px); }
+.hero-track svg { position:absolute; left:-260px; bottom:6px; height:34px; width:auto; animation:run 14s linear infinite; }
+.rail { position:relative; height:34px; overflow:hidden; background:
+    linear-gradient(var(--navy2),var(--navy2)) 0 20px / 100% 3px no-repeat,
+    linear-gradient(var(--navy2),var(--navy2)) 0 27px / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg,#8a97a8 0 5px,transparent 5px 22px) 0 17px / 100% 16px no-repeat,
+    var(--bg, var(--paper)); }
+.rail svg { position:absolute; left:-260px; bottom:8px; height:22px; width:auto; animation:run 11s linear infinite; }
+.rail.rev svg { transform:scaleX(-1); animation:runrev 13s linear infinite; }
+@keyframes run { from { left:-260px; } to { left:100%; } }
+@keyframes runrev { from { left:100%; } to { left:-260px; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-track svg, .rail svg, .rail.rev svg { animation:none; left:40px; }
+}
+
+/* ===== Celulares ===== */
+@media (max-width:760px) {
+  .hero-grid, .feat, footer .wrap { grid-template-columns:1fr; text-align:center; }
+  footer .right { text-align:center; }
+  .hero p { margin:auto; }
+  .btn { display:flex; align-items:center; width:100%; margin-top:24px; }
+  .cards, .steps { grid-template-columns:1fr 1fr; }
+  .navlinks a { display:none; }
+  .stop p { overflow-wrap:anywhere; }
+}
