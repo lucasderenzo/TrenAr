@@ -68,7 +68,7 @@ fun AlertasScreen(viewModel: AlertasViewModel = viewModel()) {
                 EmptyState(
                     icon = Icons.Filled.Refresh,
                     title = stringResource(R.string.error_no_cargar),
-                    subtitle = state.error ?: "",
+                    subtitle = state.error?.let { stringResource(it) } ?: "",
                 )
             }
             state.alerts.isEmpty() -> item {

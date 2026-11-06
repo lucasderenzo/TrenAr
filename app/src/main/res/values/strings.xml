@@ -114,6 +114,7 @@
     <string name="error_sin_conexion">Sin conexión a internet.</string>
     <string name="error_timeout">El servicio tardó demasiado en responder.</string>
     <string name="error_generico">No pudimos obtener los arribos. Probá de nuevo.</string>
+    <string name="error_alertas">No pudimos cargar las alertas.</string>
     <string name="horarios_programados">Horarios programados</string>
     <string name="horario_oficial">Horario oficial</string>
     <string name="horario_programado_clock">Horario programado · %1$s</string>
