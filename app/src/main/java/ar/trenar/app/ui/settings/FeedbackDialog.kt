@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import ar.trenar.app.R
 import ar.trenar.app.data.FeedbackClient
+import ar.trenar.app.data.FeedbackResult
 import ar.trenar.app.ui.theme.OnTimeGreen
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
@@ -49,7 +50,7 @@ fun FeedbackDialog(onDismiss: () -> Unit) {
     var contact by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var done by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<FeedbackResult?>(null) }
 
     Dialog(onDismissRequest = { if (!sending) onDismiss() }) {
         Card(
@@ -115,9 +116,15 @@ fun FeedbackDialog(onDismiss: () -> Unit) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    if (error) {
+                    error?.let { result ->
                         Text(
-                            stringResource(R.string.feedback_error),
+                            stringResource(
+                                when (result) {
+                                    FeedbackResult.Network -> R.string.feedback_error_network
+                                    FeedbackResult.RateLimited -> R.string.feedback_error_rate_limited
+                                    FeedbackResult.Server, FeedbackResult.Success -> R.string.feedback_error_server
+                                }
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium,
                         )
@@ -137,12 +144,12 @@ fun FeedbackDialog(onDismiss: () -> Unit) {
                         Spacer(Modifier.width(4.dp))
                         Button(
                             onClick = {
-                                error = false
+                                error = null
                                 sending = true
                                 scope.launch {
-                                    val ok = FeedbackClient.send(type, title.trim(), description.trim(), contact.trim())
+                                    val result = FeedbackClient.send(type, title.trim(), description.trim(), contact.trim())
                                     sending = false
-                                    if (ok) done = true else error = true
+                                    if (result == FeedbackResult.Success) done = true else error = result
                                 }
                             },
                             enabled = !sending && title.isNotBlank() && description.isNotBlank(),

@@ -170,5 +170,7 @@
     <string name="feedback_send">Enviar</string>
     <string name="feedback_sending">Enviando…</string>
     <string name="feedback_ok">Obrigado! Recebemos sua mensagem.</string>
-    <string name="feedback_error">Não foi possível enviar. Tente de novo.</string>
+    <string name="feedback_error_network">Não foi possível conectar ao servidor. Verifique sua conexão; algumas redes (como o Wi-Fi do trabalho) bloqueiam o servidor, então tente outra ou os dados móveis.</string>
+    <string name="feedback_error_rate_limited">Você enviou várias mensagens seguidas. Espere alguns minutos e tente de novo.</string>
+    <string name="feedback_error_server">O servidor teve um problema e não conseguiu receber sua mensagem. Tente de novo mais tarde.</string>
 </resources>
