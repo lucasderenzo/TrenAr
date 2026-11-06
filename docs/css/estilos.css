@@ -38,6 +38,7 @@ nav { display:flex; justify-content:space-between; align-items:center; gap:12px;
 .meta { margin-top:10px; font-size:.85rem; color:#9FB3CA; }
 
 .phone { width:min(240px,70vw); margin:auto; padding:8px; border-radius:32px; background:#050C16; box-shadow:0 0 0 1px #ffffff1a, 0 30px 60px -20px #000a; }
+.phone img { display:block; width:100%; height:auto; border-radius:25px; }
 .shot-ph { aspect-ratio:9/20; border-radius:25px; background:repeating-linear-gradient(135deg,#eef2f8 0 14px,#e2e8f1 14px 28px); display:grid; place-items:center; text-align:center; color:var(--ink2); font-size:.82rem; font-weight:600; padding:16px; }
 .shot-ph b { display:block; font-size:1.4rem; margin-bottom:6px; }
 
