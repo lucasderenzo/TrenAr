@@ -170,5 +170,7 @@
     <string name="feedback_send">Send</string>
     <string name="feedback_sending">Sending…</string>
     <string name="feedback_ok">Thanks! We got your message.</string>
-    <string name="feedback_error">Couldn\'t send. Please try again.</string>
+    <string name="feedback_error_network">Couldn\'t reach the server. Check your connection; some networks (like a workplace Wi-Fi) block the server, so try another one or mobile data.</string>
+    <string name="feedback_error_rate_limited">You sent several messages in a row. Wait a few minutes and try again.</string>
+    <string name="feedback_error_server">The server had a problem and couldn\'t receive your message. Please try again later.</string>
 </resources>

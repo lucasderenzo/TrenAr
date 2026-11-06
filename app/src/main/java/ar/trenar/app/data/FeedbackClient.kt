@@ -7,7 +7,34 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
+
+/** Resultado de enviar feedback, para que la UI pueda explicar por qué falló. */
+sealed interface FeedbackResult {
+    data object Success : FeedbackResult
+    /** Sin conexión o servidor inalcanzable (DNS, conexión, timeout, TLS; p. ej. una red que lo bloquea). */
+    data object Network : FeedbackResult
+    /** HTTP 429: demasiados envíos seguidos. */
+    data object RateLimited : FeedbackResult
+    /** Cualquier otro HTTP no exitoso (5xx, 4xx) o error inesperado. */
+    data object Server : FeedbackResult
+
+    companion object {
+        fun fromHttpCode(code: Int): FeedbackResult = when {
+            code in 200..299 -> Success
+            code == 429 -> RateLimited
+            else -> Server
+        }
+
+        fun fromThrowable(t: Throwable): FeedbackResult = when (t) {
+            is CancellationException -> throw t
+            is IOException -> Network
+            else -> Server
+        }
+    }
+}
 
 /**
  * Envía sugerencias/reportes de los usuarios al endpoint propio (en el VPS), que crea
@@ -24,13 +51,13 @@ object FeedbackClient {
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    /** @return true si el servidor aceptó el feedback. */
+    /** @return [FeedbackResult.Success] si el servidor aceptó el feedback, o la causa del fallo. */
     suspend fun send(
         type: String,            // "feature" | "bug"
         title: String,
         description: String,
         contact: String? = null,
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): FeedbackResult = withContext(Dispatchers.IO) {
         val payload = JSONObject().apply {
             put("type", type)
             put("title", title)
@@ -45,8 +72,10 @@ object FeedbackClient {
             .post(payload.toRequestBody("application/json".toMediaType()))
             .build()
 
-        runCatching {
-            client.newCall(req).execute().use { it.isSuccessful }
-        }.getOrDefault(false)
+        try {
+            client.newCall(req).execute().use { FeedbackResult.fromHttpCode(it.code) }
+        } catch (e: Exception) {
+            FeedbackResult.fromThrowable(e)
+        }
     }
 }
