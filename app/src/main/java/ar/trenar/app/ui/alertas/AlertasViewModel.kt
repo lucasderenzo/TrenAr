@@ -1,7 +1,9 @@
 package ar.trenar.app.ui.alertas
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ar.trenar.app.R
 import ar.trenar.app.data.model.ServiceAlert
 import ar.trenar.app.di.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +14,8 @@ import kotlinx.coroutines.launch
 data class AlertasUiState(
     val loading: Boolean = true,
     val alerts: List<ServiceAlert> = emptyList(),
-    val error: String? = null,
+    /** Error message as a string resource, resolved by the UI so it follows the language chosen in Settings. */
+    @StringRes val error: Int? = null,
 )
 
 class AlertasViewModel : ViewModel() {
@@ -31,7 +34,7 @@ class AlertasViewModel : ViewModel() {
                 _state.update { it.copy(loading = false, alerts = alerts, error = null) }
             } catch (e: Exception) {
                 android.util.Log.e("TrenAlertas", "load failed", e)
-                _state.update { it.copy(loading = false, error = "No pudimos cargar las alertas.") }
+                _state.update { it.copy(loading = false, error = R.string.error_alertas) }
             }
         }
     }

@@ -104,6 +104,7 @@
     <string name="error_sin_conexion">No internet connection.</string>
     <string name="error_timeout">The service took too long to respond.</string>
     <string name="error_generico">We couldn\'t get the arrivals. Try again.</string>
+    <string name="error_alertas">We couldn\'t load the alerts.</string>
     <string name="horarios_programados">Scheduled times</string>
     <string name="horario_oficial">Official schedule</string>
     <string name="horario_programado_clock">Scheduled · %1$s</string>

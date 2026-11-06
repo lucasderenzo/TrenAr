@@ -145,7 +145,8 @@ fun BoardScreen(
                 },
                 actions = {
                     if (state.board?.realtime != false) {
-                        IconButton(onClick = { viewModel.toggleFollow() }) {
+                        val fallbackName = stringResource(R.string.estacion)
+                        IconButton(onClick = { viewModel.toggleFollow(fallbackName) }) {
                             Icon(
                                 if (state.isTracking) Icons.Filled.NotificationsActive
                                 else Icons.Outlined.NotificationsNone,
@@ -181,7 +182,7 @@ fun BoardScreen(
                 state.error != null && state.board == null -> EmptyState(
                     icon = Icons.Outlined.WifiOff,
                     title = stringResource(R.string.error_no_cargar),
-                    subtitle = state.error ?: "",
+                    subtitle = state.error?.let { stringResource(it) } ?: "",
                     modifier = Modifier.align(Alignment.Center),
                 )
                 else -> BoardContent(

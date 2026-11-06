@@ -1,9 +1,11 @@
 package ar.trenar.app.ui.board
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import ar.trenar.app.R
 import ar.trenar.app.data.model.Arrival
 import ar.trenar.app.data.model.BoardState
 import ar.trenar.app.data.model.EstimatedTrain
@@ -21,7 +23,8 @@ data class BoardUiState(
     val loading: Boolean = true,
     val refreshing: Boolean = false,
     val board: BoardState? = null,
-    val error: String? = null,
+    /** Error message as a string resource, resolved by the UI so it follows the language chosen in Settings. */
+    @StringRes val error: Int? = null,
     val isFavorite: Boolean = false,
     val isTracking: Boolean = false,
     val walkSeconds: Int? = null,
@@ -80,12 +83,13 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
         }
     }
 
-    fun toggleFollow() {
+    /** [fallbackName] is used when the board hasn't loaded yet; the UI passes it already translated. */
+    fun toggleFollow(fallbackName: String) {
         val ctx = ServiceLocator.appContext
         if (_state.value.isTracking) {
             TrainTrackService.stop(ctx)
         } else {
-            val name = _state.value.board?.station?.name ?: "Estación"
+            val name = _state.value.board?.station?.name ?: fallbackName
             TrainTrackService.start(ctx, stationId, name)
         }
     }
@@ -146,13 +150,11 @@ class BoardViewModel(private val stationId: Int) : ViewModel() {
         _state.update { it.copy(filterDestination = destination) }
     }
 
-    private fun friendly(e: Exception): String {
-        val c = ServiceLocator.appContext
-        return when (e) {
-            is java.net.UnknownHostException -> c.getString(ar.trenar.app.R.string.error_sin_conexion)
-            is java.net.SocketTimeoutException -> c.getString(ar.trenar.app.R.string.error_timeout)
-            else -> c.getString(ar.trenar.app.R.string.error_generico)
-        }
+    @StringRes
+    private fun friendly(e: Exception): Int = when (e) {
+        is java.net.UnknownHostException -> R.string.error_sin_conexion
+        is java.net.SocketTimeoutException -> R.string.error_timeout
+        else -> R.string.error_generico
     }
 
     companion object {
